@@ -54,6 +54,7 @@ async function olvasTeruletek(scratch: string): Promise<Terulet[]> {
 /** A terület ticketjei szám szerint; a ticket címe a `# NN: Cím` címsorból, ennek hiányában a fájlnévből. */
 async function olvasTicketek(issues: string): Promise<Ticket[]> {
   const ticketek: Ticket[] = [];
+  // Név szerint előre rendezve, hogy az azonos számú ticketek sorrendje is állandó legyen.
   const fajlok = (await readdir(issues, { withFileTypes: true })).sort((a, b) => (a.name < b.name ? -1 : 1));
   for (const fajl of fajlok) {
     const nev = fajl.isFile() && /^(\d+)-(.+)\.md$/.exec(fajl.name);
@@ -63,7 +64,7 @@ async function olvasTicketek(issues: string): Promise<Ticket[]> {
     ticketek.push({
       szam: nev[1],
       cim: cimsor ? (/^\d+:\s*(.+)$/.exec(cimsor)?.[1] ?? cimsor) : nev[2],
-      allapot: mezo(ticket, "Status:"),
+      allapot: mezo(ticket, "Status"),
     });
   }
   return ticketek.sort((a, b) => Number(a.szam) - Number(b.szam));
@@ -81,11 +82,12 @@ function elsoCimsor(fa: Root | undefined): string | undefined {
 
 /** A `**Név:** érték` alakú bekezdés értéke, vagy undefined, ha nincs (vagy üres). */
 function mezo(fa: Root, nev: string): string | undefined {
+  const cimke = `${nev}:`;
   const bekezdes = fa.children.find(
     (elem) =>
-      elem.type === "paragraph" && elem.children[0]?.type === "strong" && toString(elem.children[0]) === nev,
+      elem.type === "paragraph" && elem.children[0]?.type === "strong" && toString(elem.children[0]) === cimke,
   );
-  return (bekezdes && toString(bekezdes).slice(nev.length).trim()) || undefined;
+  return (bekezdes && toString(bekezdes).slice(cimke.length).trim()) || undefined;
 }
 
 /** A fájlművelet eredménye, vagy undefined, ha a fájl vagy mappa nem létezik. */
