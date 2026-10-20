@@ -1,0 +1,7 @@
+# Bevált eszközökre építünk: Svelte, Vite, TypeScript
+
+**Status:** accepted
+
+A felület Svelte 5 + Vite egyoldalas app, a kinézet Tailwind + shadcn-svelte (Bits UI alapon, a komponensek a repóba másolva, lásd ADR 0005), az ikonok Lucide, a szerver egy kis Hono-szerver Node-on, a Markdownt gray-matter + remark olvassa, a fájlváltozást chokidar figyeli, a tesztek Vitesttel futnak, minden TypeScriptben. A Svelte kevesebb kódot és kevesebb rejtett működést jelent, mint a React. SvelteKitet nem használunk: egy helyi, csak olvasó eszköznek nem kell útválasztás és szerveroldali renderelés, két külön, átlátható fél (a szerver adatot ad, az oldal megjelenít) egyszerűbb. Teljes keretrendszert, adatbázist és állapotkezelő könyvtárat nem használunk. A komponenskészletek közül (Skeleton, Flowbite-svelte, Bits UI önmagában) azért a shadcn-svelte, mert a komponensek forrása a miénk, így egy helyen átírhatók; a Skeleton és a Flowbite csomagként él, a puszta Bits UI-hoz minden kinézetet nekünk kellene megírni. Az ára: a shadcn-svelte frissítéseit kézzel vesszük át.
+
+Ez az előző Groundwork tanulsága. Ott a „nincs függőség” szabály a két fájlból álló `development-status`-ből öröklődött, ahol helyes volt, egy npm-csomagnál viszont nem kellett. A függőségek nem tűntek el, csak kézzel bemásolva a `vendor/` alá kerültek (Lit, React, marked, mind-elixir), és közben ticket-olvasót, CSS-t, szervert és élő frissítést is kézzel írtunk.
