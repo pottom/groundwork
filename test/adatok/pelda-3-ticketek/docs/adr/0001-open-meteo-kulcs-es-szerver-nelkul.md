@@ -1,0 +1,3 @@
+# Az időjárásadatokat az Open-Meteótól kérjük, közvetlenül a böngészőből
+
+Az app az Open-Meteo ingyenes szolgáltatását hívja közvetlenül a böngészőből, API-kulcs és saját szerver nélkül; a Település keresése is az Open-Meteo településkeresőjével megy, Magyarországra szűrve. Más szolgáltatók (pl. OpenWeatherMap) kulcsot kérnek, ami vagy kiszivárogna a böngészőben, vagy saját szervert igényelne, amit a klubnak üzemeltetnie kellene. Az ára: a működés egy külső, ingyenes szolgáltatáson múlik, amelynek vannak korlátai (kérésszám, nincs garancia), és internet nélkül az app nem működik. Ha egyszer szolgáltatót kell váltani, az csak a hálózati részt érinti.
