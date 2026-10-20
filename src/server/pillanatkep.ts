@@ -36,7 +36,7 @@ export type Ticket = {
   /**
    * A `**Blocked by:**` sor blokkolói közül azok, amelyek nem lezártak, ahogy a sorban állnak.
    * A blokkoló ugyanazon a területen, szám szerint keresendő; a nem létező nem számít lezártnak.
-   * Ha üres, a ticket nem blokkolt.
+   * Egy nyitott ticket akkor blokkolt, ha ez nem üres; a lezárt és az ismeretlen állapotúnál nem számít.
    */
   varRa: string[];
 };
@@ -115,12 +115,16 @@ async function olvasTicketek(issues: string): Promise<Ticket[]> {
     });
   }
   ticketek.sort((a, b) => Number(a.szam) - Number(b.szam));
-  /** Lezárt, ha van ilyen számú ticket a területen, és mind lezárt. */
-  const lezart = (szam: string) => {
-    const ilyenek = ticketek.filter((ticket) => /^\d+$/.test(szam) && Number(ticket.szam) === Number(szam));
+  /** A blokkoló lezárt, ha szám, van ilyen számú ticket a területen, és mind lezárt. */
+  const lezartBlokkolo = (blokkolo: string) => {
+    if (!/^\d+$/.test(blokkolo)) return false;
+    const ilyenek = ticketek.filter((ticket) => Number(ticket.szam) === Number(blokkolo));
     return ilyenek.length > 0 && ilyenek.every((ticket) => ticket.csoport === "lezart");
   };
-  return ticketek.map(({ blokkolok, ...ticket }) => ({ ...ticket, varRa: blokkolok.filter((b) => !lezart(b)) }));
+  return ticketek.map(({ blokkolok, ...ticket }) => ({
+    ...ticket,
+    varRa: blokkolok.filter((blokkolo) => !lezartBlokkolo(blokkolo)),
+  }));
 }
 
 /** A `**Blocked by:**` érték vesszővel elválasztott elemei; a `None…` kezdetű vagy hiányzó érték üres lista. */
