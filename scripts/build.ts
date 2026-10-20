@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 import { build as bundleServer } from "esbuild";
 import { build as buildPage } from "vite";
 
+// The product is always a production build, even when started from a test (where NODE_ENV is "test").
+process.env.NODE_ENV = "production";
+
 const repo = fileURLToPath(new URL("..", import.meta.url));
 const outDir = join(repo, "dist/groundwork");
 
