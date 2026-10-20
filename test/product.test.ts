@@ -1,11 +1,11 @@
 import { type ChildProcess, execFile, spawn } from "node:child_process";
-import { appendFile, cp, mkdtemp } from "node:fs/promises";
+import { appendFile, cp, mkdtemp, rm } from "node:fs/promises";
 import { createServer, type Server } from "node:net";
 import { networkInterfaces, tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { afterEach, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 // Smoke test of the product (ADR 0003): `npm run build`, then the output folder copied to a
 // temporary place without node_modules, started there with Node alone.
@@ -14,16 +14,31 @@ const repo = fileURLToPath(new URL("..", import.meta.url));
 const sample = fileURLToPath(new URL("./fixtures/sample-3-tickets", import.meta.url));
 const ticket = ".scratch/aktualis-idojaras/issues/01-vegigfuto-vaz-egy-telepules-homerseklete.md";
 
+const projectName = "Időjárás app: a Groundwork példaprojektje";
+
+// The temporary folders of this file, removed at the end.
+const temporary: string[] = [];
+async function temporaryDir(): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), "groundwork-"));
+  temporary.push(dir);
+  return dir;
+}
+
 let product: string;
 
 beforeAll(async () => {
-  await promisify(execFile)("npm", ["run", "build"], { cwd: repo });
-  product = join(await mkdtemp(join(tmpdir(), "groundwork-product-")), "groundwork");
+  // The same as `npm run build`, without depending on how npm is called on the platform.
+  await promisify(execFile)(process.execPath, [join(repo, "scripts/build.ts")], { cwd: repo });
+  product = join(await temporaryDir(), "groundwork");
   await cp(join(repo, "dist/groundwork"), product, { recursive: true });
 }, 120_000);
 
+afterAll(async () => {
+  for (const dir of temporary.splice(0)) await rm(dir, { recursive: true, force: true });
+});
+
 async function sampleCopy(): Promise<string> {
-  const project = join(await mkdtemp(join(tmpdir(), "groundwork-")), "project");
+  const project = join(await temporaryDir(), "project");
   await cp(sample, project, { recursive: true });
   return project;
 }
@@ -61,9 +76,10 @@ function run(args: string[], cwd = product): Run {
   return started;
 }
 
-/** Runs the product and waits until it prints its address. */
+/** Runs the product without opening the browser, on a free port unless `args` has one, and waits until it prints its address. */
 async function start(args: string[], cwd?: string): Promise<Run & { url: string }> {
-  const started = run(["--no-open", ...args], cwd);
+  const port = args.includes("--port") ? [] : ["--port", String(await freePort())];
+  const started = run(["--no-open", ...port, ...args], cwd);
   const deadline = Date.now() + 10_000;
   for (;;) {
     const url = /http:\/\/[^\s/]+\//.exec(started.output())?.[0];
@@ -85,7 +101,7 @@ afterEach(async () => {
 
 describe("the product", () => {
   test("starts with Node alone, away from node_modules, and serves the page and the snapshot", async () => {
-    const { url } = await start(["--root", await sampleCopy(), "--port", String(await freePort())]);
+    const { url } = await start(["--root", await sampleCopy()]);
 
     const page = await fetch(url);
     expect(page.status).toBe(200);
@@ -96,20 +112,20 @@ describe("the product", () => {
     expect((await fetch(new URL(script!, url))).status).toBe(200);
 
     const snapshot = await (await fetch(new URL("api/snapshot", url))).json();
-    expect(snapshot.projectName).toBe("Időjárás app: a Groundwork példaprojektje");
+    expect(snapshot.projectName).toBe(projectName);
     expect(snapshot.areas[0].tickets).toHaveLength(5);
   });
 
   test("without --root, it shows the folder it was started in", async () => {
     const project = await sampleCopy();
-    const { url } = await start(["--port", String(await freePort())], project);
+    const { url } = await start([], project);
     const snapshot = await (await fetch(new URL("api/snapshot", url))).json();
-    expect(snapshot.projectName).toBe("Időjárás app: a Groundwork példaprojektje");
+    expect(snapshot.projectName).toBe(projectName);
   });
 
   test("a change in the project is sent to the browser", async () => {
     const project = await sampleCopy();
-    const { url } = await start(["--root", project, "--port", String(await freePort())]);
+    const { url } = await start(["--root", project]);
     const abort = new AbortController();
     const changes = (await fetch(new URL("api/changes", url), { signal: abort.signal })).body!.getReader();
     try {
@@ -127,7 +143,7 @@ describe("the product", () => {
   });
 
   test("listens on 127.0.0.1 only", async () => {
-    const { url } = await start(["--root", await sampleCopy(), "--port", String(await freePort())]);
+    const { url } = await start(["--root", await sampleCopy()]);
     expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/$/);
     const port = new URL(url).port;
     const outside = Object.values(networkInterfaces())
@@ -139,7 +155,7 @@ describe("the product", () => {
   });
 
   test("if the port is taken, it uses the next free one and says so", async () => {
-    const taken = await occupyPort(await freePort());
+    const taken = await occupyPort(0);
     occupied.push(taken);
     const takenPort = (taken.address() as { port: number }).port;
 
@@ -151,7 +167,7 @@ describe("the product", () => {
   });
 
   test("stops cleanly on Ctrl+C, even with the browser connected", async () => {
-    const { child, url, exited } = await start(["--root", await sampleCopy(), "--port", String(await freePort())]);
+    const { child, url, exited } = await start(["--root", await sampleCopy()]);
     const abort = new AbortController();
     await fetch(new URL("api/changes", url), { signal: abort.signal });
     try {
@@ -163,7 +179,7 @@ describe("the product", () => {
   });
 
   test("a project folder that does not exist is a clear error", async () => {
-    const missing = join(await mkdtemp(join(tmpdir(), "groundwork-")), "nincs-ilyen");
+    const missing = join(await temporaryDir(), "missing");
     const { output, exited } = run(["--root", missing, "--no-open"]);
     expect(await exited).toBe(1);
     expect(output()).toContain(`A projekt mappája nem létezik: ${missing}`);
