@@ -14,7 +14,7 @@
   import { Section } from "$lib/components/ui/section";
   import { Stack } from "$lib/components/ui/stack";
   import { Subheading } from "$lib/components/ui/subheading";
-  import type { Pillanatkep, Ticket } from "../server/pillanatkep.ts";
+  import type { Pillanatkep, Ticket } from "../server/snapshot.ts";
 
   // A legutóbb betöltött pillanatkép. Frissítéskor a régi látszik, amíg az új meg nem jön.
   let pillanatkep = $state<Pillanatkep>();

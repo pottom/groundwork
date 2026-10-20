@@ -6,7 +6,7 @@ import { parseArgs } from "node:util";
 import { getRequestListener } from "@hono/node-server";
 import { createServer } from "vite";
 import { groundworkApi } from "./app.ts";
-import { figyel } from "./figyelo.ts";
+import { figyel } from "./watcher.ts";
 
 const { values } = parseArgs({ options: { root: { type: "string" } } });
 if (!values.root) {

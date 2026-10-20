@@ -3,9 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from "vitest";
-import { figyel, type Figyelo } from "../src/server/figyelo.ts";
+import { figyel, type Figyelo } from "../src/server/watcher.ts";
 
-const pelda = fileURLToPath(new URL("./adatok/pelda-3-ticketek", import.meta.url));
+const pelda = fileURLToPath(new URL("./fixtures/sample-3-tickets", import.meta.url));
 const ticket = ".scratch/aktualis-idojaras/issues/01-vegigfuto-vaz-egy-telepules-homerseklete.md";
 
 // Ennyi ideig figyeljük, hogy valami NEM jelez: bőven több, mint az összevonás várakozása.

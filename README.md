@@ -29,8 +29,8 @@ Típusellenőrzés (`svelte-check`) és a tesztek (Vitest).
 
 ## Felépítés
 
-- `src/server/pillanatkep.ts`: az olvasó modul, egy projekt mappájából pillanatképet készít, csak olvasva.
-- `src/server/figyelo.ts`: a figyelő modul (chokidar), jelez, ha a projekt `.scratch/` mappájában vagy a gyökér `README.md`-ben valami változik; a gyors sorozatokat összevonja.
+- `src/server/snapshot.ts`: az olvasó modul, egy projekt mappájából pillanatképet készít, csak olvasva.
+- `src/server/watcher.ts`: a figyelő modul (chokidar), jelez, ha a projekt `.scratch/` mappájában vagy a gyökér `README.md`-ben valami változik; a gyors sorozatokat összevonja.
 - `src/server/app.ts`: a Hono-app, két végpont: `GET /api/pillanatkep` és `GET /api/valtozasok` (Server-Sent Events, „változott” jelzés). Az oldal a jelzésre újra lekéri a pillanatképet.
 - `src/web/`: a Svelte-oldal. A `src/web/lib/components/ui/` a komponenskészlet (shadcn-svelte alapon); csak itt lehet `class`, `style` vagy `<style>` (ADR 0005). A közös tokenek a `src/web/app.css`-ben vannak.
-- `test/adatok/`: tesztadatok, köztük a `groundwork-pelda` `3-ticketek` tagjének másolata.
+- `test/fixtures/`: tesztadatok, köztük a `groundwork-pelda` `3-ticketek` tagjének másolata.

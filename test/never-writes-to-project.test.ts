@@ -4,12 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
-import { figyel } from "../src/server/figyelo.ts";
-import { olvasPillanatkep } from "../src/server/pillanatkep.ts";
+import { figyel } from "../src/server/watcher.ts";
+import { olvasPillanatkep } from "../src/server/snapshot.ts";
 
 // ADR 0001: a Groundwork a projekt mappájába soha nem ír.
 
-const pelda = fileURLToPath(new URL("./adatok/pelda-3-ticketek", import.meta.url));
+const pelda = fileURLToPath(new URL("./fixtures/sample-3-tickets", import.meta.url));
 
 /** A mappa minden bejegyzése: útvonal, típus, módosítási idő, és fájlnál a tartalom hash-e. */
 async function lenyomat(mappa: string): Promise<string[]> {
