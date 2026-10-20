@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "groundwork-pelda",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--root", "../groundwork-pelda"],
+      "port": 5173
+    }
+  ]
+}
