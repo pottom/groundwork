@@ -123,10 +123,17 @@ describe("pillanatkép", () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
     expect(pillanatkep.teruletek[0].ticketek.map(({ szam, varRa }) => ({ szam, varRa }))).toEqual([
       { szam: "01", varRa: [] },
-      { szam: "02", varRa: ["01"] },
-      { szam: "03", varRa: ["01"] },
-      { szam: "04", varRa: ["01"] },
-      { szam: "05", varRa: ["02", "03", "04"] },
+      { szam: "02", varRa: [{ szam: "01", cim: "Végigfutó váz: egy Település hőmérséklete" }] },
+      { szam: "03", varRa: [{ szam: "01", cim: "Végigfutó váz: egy Település hőmérséklete" }] },
+      { szam: "04", varRa: [{ szam: "01", cim: "Végigfutó váz: egy Település hőmérséklete" }] },
+      {
+        szam: "05",
+        varRa: [
+          { szam: "02", cim: "Azonos nevű Települések: választás megyével" },
+          { szam: "03", cim: "Szélerősség és Égkép a kártyán" },
+          { szam: "04", cim: "Érthető hibák" },
+        ],
+      },
     ]);
   });
 
@@ -137,14 +144,24 @@ describe("pillanatkép", () => {
     expect(most.folyamatban).toEqual([]);
   });
 
+  test("Most: a példaprojekten a 02, 03, 04 és az emberre váró 05 blokkolt", async () => {
+    const { most } = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
+    expect(most.blokkolt.map(({ szam, csoport, varRa }) => ({ szam, csoport, varRa: varRa.map((b) => b.szam) }))).toEqual([
+      { szam: "02", csoport: "agentreVar", varRa: ["01"] },
+      { szam: "03", csoport: "agentreVar", varRa: ["01"] },
+      { szam: "04", csoport: "agentreVar", varRa: ["01"] },
+      { szam: "05", csoport: "emberreVar", varRa: ["02", "03", "04"] },
+    ]);
+  });
+
   test("a lezárt blokkoló után a ticket indítható; a blokkoló ugyanazon a területen, szám szerint; a nem létező nem lezárt", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("lezart-blokkolo"));
     expect(pillanatkep.teruletek[1].ticketek.map(({ szam, varRa }) => ({ szam, varRa }))).toEqual([
       { szam: "01", varRa: [] },
       { szam: "02", varRa: [] },
       { szam: "03", varRa: [] },
-      { szam: "04", varRa: ["02"] },
-      { szam: "05", varRa: ["09"] },
+      { szam: "04", varRa: [{ szam: "02", cim: "Utána indítható" }] },
+      { szam: "05", varRa: [{ szam: "09" }] },
     ]);
     expect(pillanatkep.most.indithato.map(({ szam, cim }) => ({ szam, cim }))).toEqual([
       { szam: "01", cim: "Nyitott" },
@@ -152,6 +169,10 @@ describe("pillanatkép", () => {
     ]);
     expect(pillanatkep.most.emberreVar.map(({ szam, cim }) => ({ szam, cim }))).toEqual([
       { szam: "03", cim: "Utána emberre vár" },
+    ]);
+    expect(pillanatkep.most.blokkolt.map(({ szam, varRa }) => ({ szam, varRa }))).toEqual([
+      { szam: "04", varRa: [{ szam: "02", cim: "Utána indítható" }] },
+      { szam: "05", varRa: [{ szam: "09" }] },
     ]);
   });
 
@@ -162,8 +183,15 @@ describe("pillanatkép", () => {
     expect(most.folyamatban.map((t) => t.szam)).toEqual(["01"]);
   });
 
+  test("Most: a blokkolt claimed ticket csak a Folyamatban látszik, a Blokkoltban nem", async () => {
+    const { teruletek, most } = await olvasPillanatkep(adatMappa("folyamatban"));
+    expect(teruletek[0].ticketek[0]).toMatchObject({ szam: "01", csoport: "folyamatban", varRa: [{ szam: "02" }] });
+    expect(most.folyamatban.map((t) => t.szam)).toEqual(["01"]);
+    expect(most.blokkolt).toEqual([]);
+  });
+
   test("ha nincs terület, a Most üres", async () => {
     const { most } = await olvasPillanatkep(adatMappa("cimsor-nelkuli-readme"));
-    expect(most).toEqual({ indithato: [], emberreVar: [], folyamatban: [] });
+    expect(most).toEqual({ indithato: [], emberreVar: [], folyamatban: [], blokkolt: [] });
   });
 });

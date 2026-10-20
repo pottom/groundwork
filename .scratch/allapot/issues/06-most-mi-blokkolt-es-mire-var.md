@@ -4,7 +4,7 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A példaprojekten a Blokkolt csoportban a 02, 03, 04 (a 01-re várnak) és a 05 (a 02–04-re vár) látszik
 - [ ] A 05 mellett „utána emberre vár” jelzés látszik

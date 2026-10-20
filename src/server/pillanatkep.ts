@@ -11,11 +11,16 @@ export type Pillanatkep = {
   most: Most;
 };
 
-/** A nem blokkolt agentre és emberre váró, és a folyamatban lévő ticketek, minden területről, sorrendben. */
+/**
+ * A nem blokkolt agentre és emberre váró, a folyamatban lévő és a blokkolt ticketek, minden területről, sorrendben.
+ * Blokkolt az agentre vagy emberre váró ticket, amelynek a `varRa` listája nem üres; a folyamatban lévő
+ * (`claimed`) csak a `folyamatban` között van, akkor is, ha blokkolt.
+ */
 export type Most = {
   indithato: Ticket[];
   emberreVar: Ticket[];
   folyamatban: Ticket[];
+  blokkolt: Ticket[];
 };
 
 /** Egy `.scratch/<slug>/` mappa, amelyben `spec.md` vagy `issues/` van. */
@@ -38,8 +43,11 @@ export type Ticket = {
    * A blokkoló ugyanazon a területen, szám szerint keresendő; a nem létező nem számít lezártnak.
    * Egy nyitott ticket akkor blokkolt, ha ez nem üres; a lezárt és az ismeretlen állapotúnál nem számít.
    */
-  varRa: string[];
+  varRa: Blokkolo[];
 };
+
+/** Egy blokkoló, ahogy a `**Blocked by:**` sorban áll, és a címe; a cím hiányzik, ha nincs ilyen számú ticket a területen. */
+export type Blokkolo = { szam: string; cim?: string };
 
 /** A `- [x]` és az összes (`- [ ]` és `- [x]`) pipa száma egy ticketben. */
 export type Pipak = { kesz: number; osszes: number };
@@ -72,6 +80,9 @@ export async function olvasPillanatkep(projektMappa: string): Promise<Pillanatke
       indithato: nemBlokkolt("agentreVar"),
       emberreVar: nemBlokkolt("emberreVar"),
       folyamatban: ticketek.filter((ticket) => ticket.csoport === "folyamatban"),
+      blokkolt: ticketek.filter(
+        (ticket) => (ticket.csoport === "agentreVar" || ticket.csoport === "emberreVar") && ticket.varRa.length > 0,
+      ),
     },
   };
 }
@@ -115,15 +126,22 @@ async function olvasTicketek(issues: string): Promise<Ticket[]> {
     });
   }
   ticketek.sort((a, b) => Number(a.szam) - Number(b.szam));
-  /** A blokkoló lezárt, ha szám, van ilyen számú ticket a területen, és mind lezárt. */
+  /** A blokkoló számú ticketek a területen; a nem szám blokkolóhoz nincs ilyen. */
+  const ilyenSzamu = (blokkolo: string) =>
+    /^\d+$/.test(blokkolo) ? ticketek.filter((ticket) => Number(ticket.szam) === Number(blokkolo)) : [];
+  /** A blokkoló lezárt, ha van ilyen számú ticket a területen, és mind lezárt. */
   const lezartBlokkolo = (blokkolo: string) => {
-    if (!/^\d+$/.test(blokkolo)) return false;
-    const ilyenek = ticketek.filter((ticket) => Number(ticket.szam) === Number(blokkolo));
+    const ilyenek = ilyenSzamu(blokkolo);
     return ilyenek.length > 0 && ilyenek.every((ticket) => ticket.csoport === "lezart");
   };
   return ticketek.map(({ blokkolok, ...ticket }) => ({
     ...ticket,
-    varRa: blokkolok.filter((blokkolo) => !lezartBlokkolo(blokkolo)),
+    varRa: blokkolok
+      .filter((blokkolo) => !lezartBlokkolo(blokkolo))
+      .map((blokkolo) => {
+        const cim = ilyenSzamu(blokkolo)[0]?.cim;
+        return cim === undefined ? { szam: blokkolo } : { szam: blokkolo, cim };
+      }),
   }));
 }
 

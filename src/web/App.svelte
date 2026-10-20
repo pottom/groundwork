@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Badge } from "$lib/components/ui/badge";
+  import { Detail } from "$lib/components/ui/detail";
   import { EmptyState } from "$lib/components/ui/empty-state";
   import { Group } from "$lib/components/ui/group";
   import { Heading } from "$lib/components/ui/heading";
@@ -22,10 +23,26 @@
   }
 </script>
 
-{#snippet ticketek(lista: Ticket[])}
+{#snippet mireVar(ticket: Ticket)}
+  {#each ticket.varRa as blokkolo}
+    {#if blokkolo.cim === undefined}
+      <Detail label="vár" number={blokkolo.szam} variant="warning">nincs ilyen ticket ezen a területen</Detail>
+    {:else}
+      <Detail label="vár" number={blokkolo.szam}>{blokkolo.cim}</Detail>
+    {/if}
+  {/each}
+  {#if ticket.csoport === "emberreVar"}
+    <Detail>utána emberre vár</Detail>
+  {/if}
+{/snippet}
+
+{#snippet ticketek(lista: Ticket[], blokkolt = false)}
   <ItemList>
     {#each lista as ticket}
       <Item number={ticket.szam} title={ticket.cim} dimmed={ticket.csoport === "lezart"}>
+        {#snippet details()}
+          {#if blokkolt}{@render mireVar(ticket)}{/if}
+        {/snippet}
         {#if ticket.allapot}
           <Badge variant={ticket.csoport === "ismeretlen" ? "warning" : "secondary"}>{ticket.allapot}</Badge>
         {/if}
@@ -35,10 +52,10 @@
   </ItemList>
 {/snippet}
 
-{#snippet mostCsoport(cim: string, lista: Ticket[], ures: string)}
+{#snippet mostCsoport(cim: string, lista: Ticket[], ures: string, blokkolt = false)}
   <Group title={cim}>
     {#if lista.length > 0}
-      {@render ticketek(lista)}
+      {@render ticketek(lista, blokkolt)}
     {:else}
       <Note>{ures}</Note>
     {/if}
@@ -55,6 +72,7 @@
           {@render mostCsoport("Indítható", most.indithato, "Most nincs indítható ticket.")}
           {@render mostCsoport("Emberre vár", most.emberreVar, "Most semmi nem vár rád.")}
           {@render mostCsoport("Folyamatban", most.folyamatban, "Most semmi nincs folyamatban.")}
+          {@render mostCsoport("Blokkolt", most.blokkolt, "Most semmi nem blokkolt.", true)}
         </Section>
       {/if}
       {#each teruletek as terulet (terulet.slug)}
