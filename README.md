@@ -8,6 +8,8 @@ A döntések a [`docs/adr/`](docs/adr/) mappában vannak.
 
 ## Indítás
 
+Node 22.18 vagy újabb kell: a szerver TypeScript-fájljait a Node közvetlenül futtatja, fordítás nélkül.
+
 ```bash
 npm install
 npm run dev -- --root ../groundwork-pelda

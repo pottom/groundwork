@@ -5,17 +5,22 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { olvasPillanatkep } from "../src/server/pillanatkep.ts";
 
-const adatok = (nev: string) => fileURLToPath(new URL(`./adatok/${nev}`, import.meta.url));
+const adatMappa = (nev: string) => fileURLToPath(new URL(`./adatok/${nev}`, import.meta.url));
 
 describe("pillanatkép", () => {
   test("a projekt neve a README első címsora", async () => {
-    const pillanatkep = await olvasPillanatkep(adatok("pelda-3-ticketek"));
+    const pillanatkep = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
     expect(pillanatkep.projektNev).toBe("Időjárás app: a Groundwork példaprojektje");
   });
 
   test("ha a README-ben nincs első szintű címsor, a projekt neve a mappa neve", async () => {
-    const pillanatkep = await olvasPillanatkep(adatok("cimsor-nelkuli-readme"));
+    const pillanatkep = await olvasPillanatkep(adatMappa("cimsor-nelkuli-readme"));
     expect(pillanatkep.projektNev).toBe("cimsor-nelkuli-readme");
+  });
+
+  test("a kódblokkban álló # sor nem címsor", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("kodblokkal-kezdodo-readme"));
+    expect(pillanatkep.projektNev).toBe("Kódblokk utáni cím");
   });
 
   test("ha nincs README, a projekt neve a mappa neve", async () => {

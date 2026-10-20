@@ -4,12 +4,16 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A projekt neve a gyökér `README.md` első `#` címsorából jön; ha nincs, a mappa nevéből
-- [ ] A példaprojekten a „Időjárás app: a Groundwork példaprojektje” felirat látszik
-- [ ] Az olvasó modul tesztje a `groundwork-pelda` `3-ticketek` tagjéről exportált másolaton fut, amely a tesztadatok között él
-- [ ] Az oldal világos és sötét módban is jól néz ki, a színek a közös tokenekből jönnek
-- [ ] Őrző teszt: elbukik, ha a komponenskészleten kívül bármelyik Svelte-fájlban `class`, `style` vagy `<style>` van (ADR 0005)
-- [ ] Őrző teszt: az olvasás után a projekt mappája változatlan
-- [ ] `npm run check` zöld (típusellenőrzés és tesztek)
+- [x] A projekt neve a gyökér `README.md` első `#` címsorából jön; ha nincs, a mappa nevéből
+- [x] A példaprojekten a „Időjárás app: a Groundwork példaprojektje” felirat látszik
+- [x] Az olvasó modul tesztje a `groundwork-pelda` `3-ticketek` tagjéről exportált másolaton fut, amely a tesztadatok között él
+- [x] Az oldal világos és sötét módban is jól néz ki, a színek a közös tokenekből jönnek
+- [x] Őrző teszt: elbukik, ha a komponenskészleten kívül bármelyik Svelte-fájlban `class`, `style` vagy `<style>` van (ADR 0005)
+- [x] Őrző teszt: az olvasás után a projekt mappája változatlan
+- [x] `npm run check` zöld (típusellenőrzés és tesztek)
+
+## Comments
+
+**2026-10-20, /implement:** kész. Olvasó modul: `src/server/pillanatkep.ts` (a címsort remark olvassa, így a kódblokkban álló `#` sor nem számít). Végpont: `GET /api/pillanatkep` (Hono). Oldal: `src/web/App.svelte` a komponenskészlet `Page` és `Heading` elemével. Tokenek: shadcn-svelte stone, a sötét mód a rendszerbeállítást követi. Fejlesztői indításkor egy folyamat fut: a Vite egy middleware-rel adja tovább a `/api/` kéréseket a Hono-appnak (README). A felületet kézzel ellenőriztem a példaprojekten, világos és sötét módban.
