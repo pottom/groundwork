@@ -6,7 +6,7 @@
 
   const variants = {
     secondary: "bg-secondary text-secondary-foreground border-transparent",
-    warning: "border-destructive/40 text-destructive bg-transparent",
+    warning: "border-warning/40 text-warning bg-transparent",
   };
 </script>
 

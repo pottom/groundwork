@@ -8,6 +8,14 @@ import { remark } from "remark";
 export type Pillanatkep = {
   projektNev: string;
   teruletek: Terulet[];
+  most: Most;
+};
+
+/** A nem blokkolt agentre és emberre váró, és a folyamatban lévő ticketek, minden területről, sorrendben. */
+export type Most = {
+  indithato: Ticket[];
+  emberreVar: Ticket[];
+  folyamatban: Ticket[];
 };
 
 /** Egy `.scratch/<slug>/` mappa, amelyben `spec.md` vagy `issues/` van. */
@@ -25,20 +33,26 @@ export type Ticket = {
   allapot?: string;
   csoport: Allapotcsoport;
   pipak: Pipak;
+  /**
+   * A `**Blocked by:**` sor blokkolói közül azok, amelyek nem lezártak, ahogy a sorban állnak.
+   * A blokkoló ugyanazon a területen, szám szerint keresendő; a nem létező nem számít lezártnak.
+   * Ha üres, a ticket nem blokkolt.
+   */
+  varRa: string[];
 };
 
 /** A `- [x]` és az összes (`- [ ]` és `- [x]`) pipa száma egy ticketben. */
 export type Pipak = { kesz: number; osszes: number };
 
 /** Az állapot csoportja; ami nincs a `csoportok` között, az ismeretlen, a hiányzó állapot is. */
-export type Allapotcsoport = "nyitott" | "lezart" | "ismeretlen";
+export type Allapotcsoport = "agentreVar" | "emberreVar" | "folyamatban" | "lezart" | "ismeretlen";
 
 const csoportok = new Map<string, Allapotcsoport>([
-  ["ready-for-agent", "nyitott"],
-  ["ready-for-human", "nyitott"],
-  ["needs-info", "nyitott"],
-  ["needs-triage", "nyitott"],
-  ["claimed", "nyitott"],
+  ["ready-for-agent", "agentreVar"],
+  ["ready-for-human", "emberreVar"],
+  ["needs-info", "emberreVar"],
+  ["needs-triage", "emberreVar"],
+  ["claimed", "folyamatban"],
   ["done", "lezart"],
   ["closed", "lezart"],
   ["resolved", "lezart"],
@@ -47,9 +61,18 @@ const csoportok = new Map<string, Allapotcsoport>([
 
 export async function olvasPillanatkep(projektMappa: string): Promise<Pillanatkep> {
   const readme = await haVan(olvasMarkdown(join(projektMappa, "README.md")));
+  const teruletek = await olvasTeruletek(join(projektMappa, ".scratch"));
+  const ticketek = teruletek.flatMap((terulet) => terulet.ticketek);
+  const nemBlokkolt = (csoport: Allapotcsoport) =>
+    ticketek.filter((ticket) => ticket.csoport === csoport && ticket.varRa.length === 0);
   return {
     projektNev: elsoCimsor(readme) ?? basename(resolve(projektMappa)),
-    teruletek: await olvasTeruletek(join(projektMappa, ".scratch")),
+    teruletek,
+    most: {
+      indithato: nemBlokkolt("agentreVar"),
+      emberreVar: nemBlokkolt("emberreVar"),
+      folyamatban: ticketek.filter((ticket) => ticket.csoport === "folyamatban"),
+    },
   };
 }
 
@@ -73,7 +96,7 @@ async function olvasTeruletek(scratch: string): Promise<Terulet[]> {
 
 /** A terület ticketjei szám szerint; a ticket címe a `# NN: Cím` címsorból, ennek hiányában a fájlnévből. */
 async function olvasTicketek(issues: string): Promise<Ticket[]> {
-  const ticketek: Ticket[] = [];
+  const ticketek: (Omit<Ticket, "varRa"> & { blokkolok: string[] })[] = [];
   // Név szerint előre rendezve, hogy az azonos számú ticketek sorrendje is állandó legyen.
   const fajlok = (await readdir(issues, { withFileTypes: true })).sort((a, b) => (a.name < b.name ? -1 : 1));
   for (const fajl of fajlok) {
@@ -88,9 +111,25 @@ async function olvasTicketek(issues: string): Promise<Ticket[]> {
       allapot,
       csoport: csoportok.get(allapot ?? "") ?? "ismeretlen",
       pipak: pipak(ticket),
+      blokkolok: olvasBlokkolok(mezo(ticket, "Blocked by")),
     });
   }
-  return ticketek.sort((a, b) => Number(a.szam) - Number(b.szam));
+  ticketek.sort((a, b) => Number(a.szam) - Number(b.szam));
+  /** Lezárt, ha van ilyen számú ticket a területen, és mind lezárt. */
+  const lezart = (szam: string) => {
+    const ilyenek = ticketek.filter((ticket) => /^\d+$/.test(szam) && Number(ticket.szam) === Number(szam));
+    return ilyenek.length > 0 && ilyenek.every((ticket) => ticket.csoport === "lezart");
+  };
+  return ticketek.map(({ blokkolok, ...ticket }) => ({ ...ticket, varRa: blokkolok.filter((b) => !lezart(b)) }));
+}
+
+/** A `**Blocked by:**` érték vesszővel elválasztott elemei; a `None…` kezdetű vagy hiányzó érték üres lista. */
+function olvasBlokkolok(ertek: string | undefined): string[] {
+  if (!ertek || ertek.startsWith("None")) return [];
+  return ertek
+    .split(",")
+    .map((elem) => elem.trim())
+    .filter((elem) => elem !== "");
 }
 
 async function olvasMarkdown(fajl: string): Promise<Root> {

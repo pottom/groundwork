@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A példaprojekten az Indítható csoportban a 01 látszik, az Emberre vár csoport üres
 - [ ] A 05 (emberre vár, de blokkolt) nem jelenik meg az Emberre vár csoportban

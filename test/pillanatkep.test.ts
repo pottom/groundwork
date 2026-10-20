@@ -64,14 +64,14 @@ describe("pillanatkép", () => {
     expect(pillanatkep.teruletek[0].ticketek[0].pipak).toEqual({ kesz: 3, osszes: 4 });
   });
 
-  test("a done, closed, resolved és wontfix állapotú ticket lezárt, a többi nyitott", async () => {
+  test("a done, closed, resolved és wontfix állapotú ticket lezárt", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("lezart-ticketek"));
     expect(pillanatkep.teruletek[0].ticketek.map(({ allapot, csoport }) => ({ allapot, csoport }))).toEqual([
       { allapot: "done", csoport: "lezart" },
       { allapot: "closed", csoport: "lezart" },
       { allapot: "resolved", csoport: "lezart" },
       { allapot: "wontfix", csoport: "lezart" },
-      { allapot: "ready-for-agent", csoport: "nyitott" },
+      { allapot: "ready-for-agent", csoport: "agentreVar" },
     ]);
   });
 
@@ -79,7 +79,7 @@ describe("pillanatkép", () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("ismeretlen-allapot"));
     expect(pillanatkep.teruletek[0].ticketek).toMatchObject([
       { szam: "01", cim: "Átnézésre vár", allapot: "in-review", csoport: "ismeretlen" },
-      { szam: "02", cim: "Indítható", allapot: "ready-for-agent", csoport: "nyitott" },
+      { szam: "02", cim: "Indítható", allapot: "ready-for-agent", csoport: "agentreVar" },
     ]);
   });
 
@@ -102,11 +102,11 @@ describe("pillanatkép", () => {
   test("a ticket száma a fájlnévből, a címe a címsorból vagy a fájlnévből, az állapota a Status sorból, hiányában ismeretlen", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("ticket-szelek"));
     expect(pillanatkep.teruletek[0].ticketek.map(({ szam, cim, allapot, csoport }) => ({ szam, cim, allapot, csoport }))).toEqual([
-      { szam: "2", cim: "Második", allapot: "ready-for-agent", csoport: "nyitott" },
-      { szam: "03", cim: "Cím szám nélkül", allapot: "claimed", csoport: "nyitott" },
-      { szam: "04", cim: "cimsor-nelkuli", allapot: "needs-info", csoport: "nyitott" },
+      { szam: "2", cim: "Második", allapot: "ready-for-agent", csoport: "agentreVar" },
+      { szam: "03", cim: "Cím szám nélkül", allapot: "claimed", csoport: "folyamatban" },
+      { szam: "04", cim: "cimsor-nelkuli", allapot: "needs-info", csoport: "emberreVar" },
       { szam: "06", cim: "Állapot nélkül", csoport: "ismeretlen" },
-      { szam: "10", cim: "Tizedik", allapot: "needs-triage", csoport: "nyitott" },
+      { szam: "10", cim: "Tizedik", allapot: "needs-triage", csoport: "emberreVar" },
     ]);
   });
 
@@ -118,5 +118,52 @@ describe("pillanatkép", () => {
   test("ha nincs .scratch, nincs terület", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("cimsor-nelkuli-readme"));
     expect(pillanatkep.teruletek).toEqual([]);
+  });
+  test("a ticket a nem lezárt blokkolóira vár; a None… kezdetű Blocked by üres", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
+    expect(pillanatkep.teruletek[0].ticketek.map(({ szam, varRa }) => ({ szam, varRa }))).toEqual([
+      { szam: "01", varRa: [] },
+      { szam: "02", varRa: ["01"] },
+      { szam: "03", varRa: ["01"] },
+      { szam: "04", varRa: ["01"] },
+      { szam: "05", varRa: ["02", "03", "04"] },
+    ]);
+  });
+
+  test("Most: a példaprojekten csak a 01 indítható, az emberre váró 05 blokkolt", async () => {
+    const { most } = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
+    expect(most.indithato.map((t) => t.szam)).toEqual(["01"]);
+    expect(most.emberreVar).toEqual([]);
+    expect(most.folyamatban).toEqual([]);
+  });
+
+  test("a lezárt blokkoló után a ticket indítható; a blokkoló ugyanazon a területen, szám szerint; a nem létező nem lezárt", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("lezart-blokkolo"));
+    expect(pillanatkep.teruletek[1].ticketek.map(({ szam, varRa }) => ({ szam, varRa }))).toEqual([
+      { szam: "01", varRa: [] },
+      { szam: "02", varRa: [] },
+      { szam: "03", varRa: [] },
+      { szam: "04", varRa: ["02"] },
+      { szam: "05", varRa: ["09"] },
+    ]);
+    expect(pillanatkep.most.indithato.map(({ szam, cim }) => ({ szam, cim }))).toEqual([
+      { szam: "01", cim: "Nyitott" },
+      { szam: "02", cim: "Utána indítható" },
+    ]);
+    expect(pillanatkep.most.emberreVar.map(({ szam, cim }) => ({ szam, cim }))).toEqual([
+      { szam: "03", cim: "Utána emberre vár" },
+    ]);
+  });
+
+  test("Most: a claimed ticket folyamatban, a needs-info és a needs-triage emberre vár", async () => {
+    const { most } = await olvasPillanatkep(adatMappa("folyamatban"));
+    expect(most.indithato).toEqual([]);
+    expect(most.emberreVar.map((t) => t.szam)).toEqual(["02", "03"]);
+    expect(most.folyamatban.map((t) => t.szam)).toEqual(["01"]);
+  });
+
+  test("ha nincs terület, a Most üres", async () => {
+    const { most } = await olvasPillanatkep(adatMappa("cimsor-nelkuli-readme"));
+    expect(most).toEqual({ indithato: [], emberreVar: [], folyamatban: [] });
   });
 });
