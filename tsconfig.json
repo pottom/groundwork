@@ -17,5 +17,5 @@
       "$lib/*": ["./src/web/lib/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "test/*.ts", "vite.config.ts"]
+  "include": ["src/**/*.ts", "src/**/*.svelte", "test/*.ts", "scripts/*.ts", "vite.config.ts"]
 }

@@ -1,12 +1,11 @@
 // Development launcher: one process, one port. Vite serves the page, and the /api/
-// requests go to the Hono app. The watcher reports project changes to the browser
-// through the Hono app.
+// requests go to the Groundwork API (`app.ts`), the same one the production launcher
+// (`main.ts`) uses.
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { getRequestListener } from "@hono/node-server";
 import { createServer } from "vite";
 import { groundworkApi } from "./app.ts";
-import { watchProject } from "./watcher.ts";
 
 const { values } = parseArgs({ options: { root: { type: "string" } } });
 if (!values.root) {
@@ -14,9 +13,8 @@ if (!values.root) {
   process.exit(1);
 }
 const projectDir = resolve(values.root);
-const { app, notifyChange } = groundworkApi(projectDir);
+const { app, close } = await groundworkApi(projectDir);
 const api = getRequestListener(app.fetch);
-const watcher = await watchProject(projectDir, notifyChange);
 
 const vite = await createServer({
   plugins: [
@@ -35,7 +33,7 @@ vite.printUrls();
 // On shutdown (Ctrl+C, or when `node --watch-path` restarts) we close the watcher too.
 async function shutdown() {
   try {
-    await watcher.close();
+    await close();
     await vite.close();
   } finally {
     process.exit();

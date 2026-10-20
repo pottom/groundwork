@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "node --watch-path=src/server src/server/dev.ts",
+    "build": "node scripts/build.ts",
     "check": "svelte-check --tsconfig ./tsconfig.json --output human --fail-on-warnings && vitest run",
     "test": "vitest"
   },
@@ -23,6 +24,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
     "svelte": "^5.57.2",
     "svelte-check": "^4.7.7",
     "tailwindcss": "^4.3.3",

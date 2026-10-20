@@ -1,13 +1,15 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { readSnapshot } from "./snapshot.ts";
+import { watchProject } from "./watcher.ts";
 
 /**
- * The Groundwork API: serves a snapshot of a project folder, and tells the browser over a
- * Server-Sent Events connection when the project has changed. `notifyChange()` sends the
- * notification to every open connection; the launcher wires the watcher (`watcher.ts`) to it.
+ * The Groundwork API for a project folder, shared by the development and the production
+ * launcher: it serves a snapshot of the folder, and tells the browser over a Server-Sent Events
+ * connection when the project has changed. It starts watching the folder (`watcher.ts`), and
+ * `close()` stops the watching.
  */
-export function groundworkApi(projectDir: string) {
+export async function groundworkApi(projectDir: string) {
   const connections = new Set<() => void>();
 
   const app = new Hono()
@@ -21,5 +23,6 @@ export function groundworkApi(projectDir: string) {
       }),
     );
 
-  return { app, notifyChange: () => connections.forEach((notify) => notify()) };
+  const watcher = await watchProject(projectDir, () => connections.forEach((notify) => notify()));
+  return { app, close: () => watcher.close() };
 }
