@@ -10,6 +10,7 @@ Amit tudnia kell (a triage és a grillezés pontosítja):
 - már futó projektnél felzárkóztat: végignézi a nyitott ticketeket a kóddal és a git-történettel, ticketenként javaslatot tesz a lezárásra, és csak az elfogadottakat zárja le;
 - megkérdezi az indítás módját (npx vagy konténer, ADR 0008), és a `.groundwork/` alá írja a választott módot és a rögzített verziót; megmondja, hogyan indítható;
 - kérésre frissíti a rögzített verziót;
+- kérésre kiadja a kész parancsot a saját, offline image helyi megépítéséhez (ADR 0008);
 - kivételkor eltávolítja a `.groundwork/` mappát és a jelölt blokkokat, mást nem;
 - GitHub vagy GitLab tracker esetén jelzi, hogy a Groundwork ma csak a helyi trackert olvassa.
 
