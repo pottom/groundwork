@@ -1,0 +1,7 @@
+# Az előkészítés egy skill, nem a Groundwork programja
+
+**Status:** accepted
+
+Egy projektet a Groundworkhöz egyetlen, promptból vezérelt skill készít elő (`setup-groundwork`), nem a Groundwork programja: egy agent futtatja, körülnéz, megmutatja, mit tenne, és csak az ember jóváhagyása után ír. Matt Pocock skilljeivel azonos úton jut el az agenthez (`npx skills add`, a Groundwork repójának `skills/` mappájából), az npm-csomag csak a programot hordozza. Egy belépési pontja van: előkészítetlen projektben előkészít, előkészítettben ellenőriz és felkínálja a frissítést, a módváltást, a felzárkóztatást és a kivételt. Így a Groundwork programja továbbra sem ír a projektbe (ADR 0001), csak jelzi, ha egy projekt nincs előkészítve, és megmondja a két lépést. Nem kommitol: az ember `git diff`-fel nézi át, amit írt.
+
+Ez a régi Groundwork tanulsága: ott a `groundwork init` egy kb. 15 KB-os determinisztikus program volt, amely sok helyre írt (skillek, hookok, beállítások), és minden új helyzethez új ágat kellett kódolni. Egy skill a projekt tényleges állapotához igazodik (van-e Matt-setup, milyen a tracker, kézzel beírt szabály, nyitott ticketek), és ítéletet igénylő munkát is el tud végezni, például a futó projekt ticketjeinek felzárkóztatását. Az ára: a viselkedése nem egységtesztelhető, ezért a példaprojekt ismert állapotain (ADR 0004) kell kipróbálni, és a sablonjai (a `.groundwork/README.md` és a jelölt blokk szövege) rögzítettek, hogy két futás ugyanazt írja.
