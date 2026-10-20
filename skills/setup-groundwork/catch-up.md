@@ -2,8 +2,6 @@
 
 Brings a running project's tickets up to date: open tickets whose work is already in the code get closed, but only the ones the user accepts. It runs when the tracker is local and at least one ticket is open (step 1 of [SKILL.md](SKILL.md) establishes both); otherwise tell the user there is nothing to catch up, and stop.
 
-An **open ticket** is a ticket file under `.scratch/*/issues/` whose `Status:` value is neither `done` nor `wontfix`.
-
 ## 1. Gather the evidence
 
 Work through every open ticket, feature folder by feature folder, in ticket-number order:

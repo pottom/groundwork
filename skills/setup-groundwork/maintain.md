@@ -33,7 +33,7 @@ Done when the user has picked one option. Until then, write nothing. When they p
 The plan deletes the footprint and keeps everything else exactly as it is:
 
 - Delete the `.groundwork/` folder; list each file in it.
-- Find every marker line in the project: a line that is exactly `<!-- groundwork:begin <name> -->` (search all files, `.git/` and `.groundwork/` aside). For each one, delete the lines from it through its matching `<!-- groundwork:end <name> -->` line, plus exactly one adjacent blank line: the one right after the block, or the one right before it when the block ends the file. Prepare inserted the block with one blank line on each side, so this leaves the file byte-identical to before.
+- Find every marker line in the project: a line that is exactly `<!-- groundwork:begin <name> -->` (search the files under `docs/agents/`, where prepare puts them). For each one, delete the lines from it through its matching `<!-- groundwork:end <name> -->` line, plus exactly one adjacent blank line: the one right after the block, or the one right before it when the block ends the file. Prepare inserted the block with one blank line on each side, so this leaves the file byte-identical to before.
 
 An unmarked `## Closing a ticket` section is the user's own and stays. Ticket files stay as they are, closed tickets included.
 
