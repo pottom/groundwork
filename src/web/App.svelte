@@ -70,7 +70,7 @@
   });
 </script>
 
-{#snippet blockers(ticket: Ticket)}
+{#snippet waitingOnDetails(ticket: Ticket)}
   {#each ticket.waitingOn as blocker}
     {#if blocker.title === undefined}
       <Detail label="vár" number={blocker.number} variant="warning">nincs ilyen ticket ezen a területen</Detail>
@@ -88,7 +88,7 @@
     {#each tickets as ticket}
       <Item number={ticket.number} title={ticket.title} dimmed={ticket.group === "closed"}>
         {#snippet details()}
-          {#if blocked}{@render blockers(ticket)}{/if}
+          {#if blocked}{@render waitingOnDetails(ticket)}{/if}
         {/snippet}
         {#if ticket.status}
           <Badge variant={ticket.group === "unknown" ? "warning" : "secondary"}>{ticket.status}</Badge>
