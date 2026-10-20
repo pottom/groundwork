@@ -126,22 +126,17 @@ async function olvasTicketek(issues: string): Promise<Ticket[]> {
     });
   }
   ticketek.sort((a, b) => Number(a.szam) - Number(b.szam));
-  /** A blokkoló számú ticketek a területen; a nem szám blokkolóhoz nincs ilyen. */
-  const ilyenSzamu = (blokkolo: string) =>
-    /^\d+$/.test(blokkolo) ? ticketek.filter((ticket) => Number(ticket.szam) === Number(blokkolo)) : [];
-  /** A blokkoló lezárt, ha van ilyen számú ticket a területen, és mind lezárt. */
-  const lezartBlokkolo = (blokkolo: string) => {
-    const ilyenek = ilyenSzamu(blokkolo);
-    return ilyenek.length > 0 && ilyenek.every((ticket) => ticket.csoport === "lezart");
-  };
   return ticketek.map(({ blokkolok, ...ticket }) => ({
     ...ticket,
-    varRa: blokkolok
-      .filter((blokkolo) => !lezartBlokkolo(blokkolo))
-      .map((blokkolo) => {
-        const cim = ilyenSzamu(blokkolo)[0]?.cim;
-        return cim === undefined ? { szam: blokkolo } : { szam: blokkolo, cim };
-      }),
+    varRa: blokkolok.flatMap((blokkolo) => {
+      // A blokkoló számú ticketek a területen; a nem szám blokkolóhoz nincs ilyen.
+      const ilyenek = /^\d+$/.test(blokkolo)
+        ? ticketek.filter((masik) => Number(masik.szam) === Number(blokkolo))
+        : [];
+      // Lezárt, ha van ilyen számú ticket, és mind lezárt; ekkor már nem vár rá.
+      if (ilyenek.length > 0 && ilyenek.every((masik) => masik.csoport === "lezart")) return [];
+      return ilyenek.length > 0 ? [{ szam: blokkolo, cim: ilyenek[0].cim }] : [{ szam: blokkolo }];
+    }),
   }));
 }
 

@@ -12,14 +12,14 @@
     variant = "default",
     children,
   }: { label?: string; number?: string; variant?: "default" | "warning"; children: Snippet } = $props();
+
+  const variants = {
+    default: "text-muted-foreground",
+    warning: "text-warning",
+  };
 </script>
 
-<span
-  class={[
-    "block text-sm text-pretty",
-    variant === "warning" ? "text-warning" : "text-muted-foreground",
-  ]}
->
+<span class={["block text-sm text-pretty", variants[variant]]}>
   {#if label}{label}{/if}
   {#if number}<span class="font-mono tabular-nums">{number}</span>{/if}
   {@render children()}

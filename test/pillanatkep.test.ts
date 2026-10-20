@@ -146,7 +146,7 @@ describe("pillanatkép", () => {
 
   test("Most: a példaprojekten a 02, 03, 04 és az emberre váró 05 blokkolt", async () => {
     const { most } = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
-    expect(most.blokkolt.map(({ szam, csoport, varRa }) => ({ szam, csoport, varRa: varRa.map((b) => b.szam) }))).toEqual([
+    expect(most.blokkolt.map(({ szam, csoport, varRa }) => ({ szam, csoport, varRa: varRa.map((blokkolo) => blokkolo.szam) }))).toEqual([
       { szam: "02", csoport: "agentreVar", varRa: ["01"] },
       { szam: "03", csoport: "agentreVar", varRa: ["01"] },
       { szam: "04", csoport: "agentreVar", varRa: ["01"] },
