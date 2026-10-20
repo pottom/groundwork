@@ -10,6 +10,8 @@ Groundwork is a local, read-only viewer for what the engineering skills (`/setup
 
 Prompt-driven, not a script: explore, show the plan, and write only after the user approves that exact plan. Talk to the user in the language of the conversation. Everything written to files is English and comes from the templates in this folder, verbatim except for the `{{placeholders}}`, so two runs in the same situation write the same bytes.
 
+A goal named in the call (e.g. `/setup-groundwork remove`) goes straight to that option; the plan still needs the user's approval.
+
 ## The footprint
 
 This is everything Groundwork ever puts into a project; every flow adds, checks or removes exactly these:
@@ -45,7 +47,7 @@ Done when you can state each of these four facts, or have found that `docs/agent
 
 - **No `docs/agents/`**: stop here and write nothing. Tell the user to run `/setup-matt-pocock-skills` first (only they can start it), then run this skill again.
 - **No `.groundwork/`**: follow [prepare.md](prepare.md) to build the plan.
-- **`.groundwork/` present**: tell the user the project is already prepared and what you found; stop.
+- **`.groundwork/` present**: follow [maintain.md](maintain.md): check, then offer the options.
 
 ### 3. Show the plan and ask
 
