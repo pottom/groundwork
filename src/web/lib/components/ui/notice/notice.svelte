@@ -2,8 +2,8 @@
   import type { Snippet } from "svelte";
 
   /**
-   * Halk, lebegő jelzés az oldal alján, például ha a kapcsolat a szerverrel megszakadt.
-   * A tartalom fölött lebeg, nem tolja el.
+   * A quiet, floating notice at the bottom of the page, for example when the connection to the server dropped.
+   * It floats above the content and does not push it aside.
    */
   let { children }: { children: Snippet } = $props();
 </script>

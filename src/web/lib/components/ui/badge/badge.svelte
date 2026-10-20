@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
 
-  /** `warning`: figyelmet kér, például egy ismeretlen állapot. */
+  /** `warning`: asks for attention, for example an unknown status. */
   let { variant = "secondary", children }: { variant?: "secondary" | "warning"; children: Snippet } = $props();
 
   const variants = {

@@ -14,120 +14,120 @@
   import { Section } from "$lib/components/ui/section";
   import { Stack } from "$lib/components/ui/stack";
   import { Subheading } from "$lib/components/ui/subheading";
-  import type { Pillanatkep, Ticket } from "../server/snapshot.ts";
+  import type { Snapshot, Ticket } from "../server/snapshot.ts";
 
-  // A legutóbb betöltött pillanatkép. Frissítéskor a régi látszik, amíg az új meg nem jön.
-  let pillanatkep = $state<Pillanatkep>();
-  let betoltesiHiba = $state(false);
-  let megszakadt = $state(false);
+  // The most recently loaded snapshot. While refreshing, the old one stays visible until the new one arrives.
+  let snapshot = $state<Snapshot>();
+  let loadFailed = $state(false);
+  let disconnected = $state(false);
 
-  // Csak a legutóbb indított lekérés eredménye kerül ki, így egy lassú, régebbi válasz
-  // nem írhatja felül az újabbat.
-  let utolsoLekeres = 0;
+  // Only the result of the most recently started request is shown, so a slow, older response
+  // cannot overwrite a newer one.
+  let latestRequest = 0;
 
-  async function betolt() {
-    const lekeres = ++utolsoLekeres;
+  async function load() {
+    const request = ++latestRequest;
     try {
-      const valasz = await fetch("/api/pillanatkep");
-      if (!valasz.ok) throw new Error(`HTTP ${valasz.status}`);
-      const uj: Pillanatkep = await valasz.json();
-      if (lekeres !== utolsoLekeres) return;
-      pillanatkep = uj;
-      betoltesiHiba = false;
-      document.title = uj.projektNev;
+      const response = await fetch("/api/snapshot");
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const next: Snapshot = await response.json();
+      if (request !== latestRequest) return;
+      snapshot = next;
+      loadFailed = false;
+      document.title = next.projectName;
     } catch {
-      if (lekeres === utolsoLekeres) betoltesiHiba = true;
+      if (request === latestRequest) loadFailed = true;
     }
   }
 
-  // A szerver jelzésére, és minden (újra)csatlakozáskor újra betöltjük a pillanatképet: a
-  // kapcsolat felépülése előtt vagy kiesése alatt is változhatott valami. Hálózati hibánál az
-  // EventSource magától újracsatlakozik; ha végleg lezárta a kapcsolatot (például mert a szerver
-  // újraindulás közben hibát adott), kis szünet után újat nyitunk.
+  // We reload the snapshot when the server says so, and on every (re)connect: something may
+  // have changed before the connection was up or while it was down. On a network error the
+  // EventSource reconnects by itself; if it closed the connection for good (for example because
+  // the server returned an error while restarting), we open a new one after a short pause.
   onMount(() => {
-    let valtozasok: EventSource;
-    let ujraIdozito: ReturnType<typeof setTimeout>;
+    let changes: EventSource;
+    let retryTimer: ReturnType<typeof setTimeout>;
 
-    function kapcsolodik() {
-      valtozasok = new EventSource("/api/valtozasok");
-      valtozasok.addEventListener("valtozott", betolt);
-      valtozasok.onopen = () => {
-        megszakadt = false;
-        betolt();
+    function connect() {
+      changes = new EventSource("/api/changes");
+      changes.addEventListener("changed", load);
+      changes.onopen = () => {
+        disconnected = false;
+        load();
       };
-      valtozasok.onerror = () => {
-        megszakadt = true;
-        if (valtozasok.readyState === EventSource.CLOSED) ujraIdozito = setTimeout(kapcsolodik, 3000);
+      changes.onerror = () => {
+        disconnected = true;
+        if (changes.readyState === EventSource.CLOSED) retryTimer = setTimeout(connect, 3000);
       };
     }
 
-    betolt();
-    kapcsolodik();
+    load();
+    connect();
     return () => {
-      clearTimeout(ujraIdozito);
-      valtozasok.close();
+      clearTimeout(retryTimer);
+      changes.close();
     };
   });
 </script>
 
-{#snippet mireVar(ticket: Ticket)}
-  {#each ticket.varRa as blokkolo}
-    {#if blokkolo.cim === undefined}
-      <Detail label="vár" number={blokkolo.szam} variant="warning">nincs ilyen ticket ezen a területen</Detail>
+{#snippet blockers(ticket: Ticket)}
+  {#each ticket.waitingOn as blocker}
+    {#if blocker.title === undefined}
+      <Detail label="vár" number={blocker.number} variant="warning">nincs ilyen ticket ezen a területen</Detail>
     {:else}
-      <Detail label="vár" number={blokkolo.szam}>{blokkolo.cim}</Detail>
+      <Detail label="vár" number={blocker.number}>{blocker.title}</Detail>
     {/if}
   {/each}
-  {#if ticket.csoport === "emberreVar"}
+  {#if ticket.group === "awaitingHuman"}
     <Detail>utána emberre vár</Detail>
   {/if}
 {/snippet}
 
-{#snippet ticketek(lista: Ticket[], blokkolt = false)}
+{#snippet ticketList(tickets: Ticket[], blocked = false)}
   <ItemList>
-    {#each lista as ticket}
-      <Item number={ticket.szam} title={ticket.cim} dimmed={ticket.csoport === "lezart"}>
+    {#each tickets as ticket}
+      <Item number={ticket.number} title={ticket.title} dimmed={ticket.group === "closed"}>
         {#snippet details()}
-          {#if blokkolt}{@render mireVar(ticket)}{/if}
+          {#if blocked}{@render blockers(ticket)}{/if}
         {/snippet}
-        {#if ticket.allapot}
-          <Badge variant={ticket.csoport === "ismeretlen" ? "warning" : "secondary"}>{ticket.allapot}</Badge>
+        {#if ticket.status}
+          <Badge variant={ticket.group === "unknown" ? "warning" : "secondary"}>{ticket.status}</Badge>
         {/if}
-        <Progress done={ticket.pipak.kesz} total={ticket.pipak.osszes} />
+        <Progress done={ticket.checklist.done} total={ticket.checklist.total} />
       </Item>
     {/each}
   </ItemList>
 {/snippet}
 
-{#snippet mostCsoport(cim: string, lista: Ticket[], ures: string, blokkolt = false)}
-  <Group title={cim}>
-    {#if lista.length > 0}
-      {@render ticketek(lista, blokkolt)}
+{#snippet nowGroup(title: string, tickets: Ticket[], emptyText: string, blocked = false)}
+  <Group title={title}>
+    {#if tickets.length > 0}
+      {@render ticketList(tickets, blocked)}
     {:else}
-      <Note>{ures}</Note>
+      <Note>{emptyText}</Note>
     {/if}
   </Group>
 {/snippet}
 
 <Page>
-  {#if pillanatkep}
-    {@const { projektNev, teruletek, most } = pillanatkep}
+  {#if snapshot}
+    {@const { projectName, areas, now } = snapshot}
     <Stack>
-      <Heading>{projektNev}</Heading>
-      {#if teruletek.length > 0}
+      <Heading>{projectName}</Heading>
+      {#if areas.length > 0}
         <Section>
           <Subheading>Most</Subheading>
-          {@render mostCsoport("Indítható", most.indithato, "Most nincs indítható ticket.")}
-          {@render mostCsoport("Emberre vár", most.emberreVar, "Most semmi nem vár rád.")}
-          {@render mostCsoport("Folyamatban", most.folyamatban, "Most semmi nincs folyamatban.")}
-          {@render mostCsoport("Blokkolt", most.blokkolt, "Most semmi nem blokkolt.", true)}
+          {@render nowGroup("Indítható", now.startable, "Most nincs indítható ticket.")}
+          {@render nowGroup("Emberre vár", now.awaitingHuman, "Most semmi nem vár rád.")}
+          {@render nowGroup("Folyamatban", now.inProgress, "Most semmi nincs folyamatban.")}
+          {@render nowGroup("Blokkolt", now.blocked, "Most semmi nem blokkolt.", true)}
         </Section>
       {/if}
-      {#each teruletek as terulet (terulet.slug)}
+      {#each areas as area (area.slug)}
         <Section>
-          <Subheading>{terulet.cim}</Subheading>
-          {#if terulet.ticketek.length > 0}
-            {@render ticketek(terulet.ticketek)}
+          <Subheading>{area.title}</Subheading>
+          {#if area.tickets.length > 0}
+            {@render ticketList(area.tickets)}
           {/if}
         </Section>
       {:else}
@@ -137,12 +137,12 @@
         </EmptyState>
       {/each}
     </Stack>
-  {:else if betoltesiHiba}
+  {:else if loadFailed}
     A pillanatkép nem tölthető be.
   {/if}
-  {#if megszakadt}
+  {#if disconnected}
     <Notice>A kapcsolat megszakadt, újracsatlakozás…</Notice>
-  {:else if pillanatkep && betoltesiHiba}
+  {:else if snapshot && loadFailed}
     <Notice>A legutóbbi frissítés nem sikerült, a korábbi állapot látszik.</Notice>
   {/if}
 </Page>

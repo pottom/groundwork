@@ -4,48 +4,48 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
-import { figyel } from "../src/server/watcher.ts";
-import { olvasPillanatkep } from "../src/server/snapshot.ts";
+import { readSnapshot } from "../src/server/snapshot.ts";
+import { watchProject } from "../src/server/watcher.ts";
 
-// ADR 0001: a Groundwork a projekt mappájába soha nem ír.
+// ADR 0001: Groundwork never writes to the project folder.
 
-const pelda = fileURLToPath(new URL("./fixtures/sample-3-tickets", import.meta.url));
+const sample = fileURLToPath(new URL("./fixtures/sample-3-tickets", import.meta.url));
 
-/** A mappa minden bejegyzése: útvonal, típus, módosítási idő, és fájlnál a tartalom hash-e. */
-async function lenyomat(mappa: string): Promise<string[]> {
-  const bejegyzesek = await readdir(mappa, { recursive: true });
+/** Every entry of the folder: path, type, modification time, and for files the hash of the contents. */
+async function fingerprint(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { recursive: true });
   return Promise.all(
-    [mappa, ...bejegyzesek.sort().map((b) => join(mappa, b))].map(async (utvonal) => {
-      const adatok = await stat(utvonal);
-      const tartalom = adatok.isFile()
-        ? createHash("sha256").update(await readFile(utvonal)).digest("hex")
-        : "mappa";
-      return `${utvonal} ${adatok.mtimeMs} ${tartalom}`;
+    [dir, ...entries.sort().map((e) => join(dir, e))].map(async (path) => {
+      const stats = await stat(path);
+      const contents = stats.isFile()
+        ? createHash("sha256").update(await readFile(path)).digest("hex")
+        : "dir";
+      return `${path} ${stats.mtimeMs} ${contents}`;
     }),
   );
 }
 
-async function peldaMasolat(): Promise<string> {
-  const projekt = join(await mkdtemp(join(tmpdir(), "groundwork-")), "projekt");
-  await cp(pelda, projekt, { recursive: true });
-  return projekt;
+async function sampleCopy(): Promise<string> {
+  const project = join(await mkdtemp(join(tmpdir(), "groundwork-")), "project");
+  await cp(sample, project, { recursive: true });
+  return project;
 }
 
-test("az olvasás után a projekt mappája változatlan", async () => {
-  const projekt = await peldaMasolat();
-  const elotte = await lenyomat(projekt);
+test("after reading, the project folder is unchanged", async () => {
+  const project = await sampleCopy();
+  const before = await fingerprint(project);
 
-  await olvasPillanatkep(projekt);
+  await readSnapshot(project);
 
-  expect(await lenyomat(projekt)).toEqual(elotte);
+  expect(await fingerprint(project)).toEqual(before);
 });
 
-test("a figyelés után a projekt mappája változatlan", async () => {
-  const projekt = await peldaMasolat();
-  const elotte = await lenyomat(projekt);
+test("after watching, the project folder is unchanged", async () => {
+  const project = await sampleCopy();
+  const before = await fingerprint(project);
 
-  const figyelo = await figyel(projekt, () => {});
-  await figyelo.close();
+  const watcher = await watchProject(project, () => {});
+  await watcher.close();
 
-  expect(await lenyomat(projekt)).toEqual(elotte);
+  expect(await fingerprint(project)).toEqual(before);
 });

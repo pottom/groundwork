@@ -1,22 +1,22 @@
-// Fejlesztői indítás: egy folyamat, egy port. A Vite szolgálja ki az oldalt,
-// a /api/ kéréseket pedig a Hono-app kapja meg. A figyelő a projekt változásait
-// a Hono-appon át jelzi a böngészőnek.
+// Development launcher: one process, one port. Vite serves the page, and the /api/
+// requests go to the Hono app. The watcher reports project changes to the browser
+// through the Hono app.
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { getRequestListener } from "@hono/node-server";
 import { createServer } from "vite";
 import { groundworkApi } from "./app.ts";
-import { figyel } from "./watcher.ts";
+import { watchProject } from "./watcher.ts";
 
 const { values } = parseArgs({ options: { root: { type: "string" } } });
 if (!values.root) {
   console.error("Használat: npm run dev -- --root <a projekt mappája>");
   process.exit(1);
 }
-const projektMappa = resolve(values.root);
-const { app, valtozott } = groundworkApi(projektMappa);
+const projectDir = resolve(values.root);
+const { app, notifyChange } = groundworkApi(projectDir);
 const api = getRequestListener(app.fetch);
-const figyelo = await figyel(projektMappa, valtozott);
+const watcher = await watchProject(projectDir, notifyChange);
 
 const vite = await createServer({
   plugins: [
@@ -29,17 +29,17 @@ const vite = await createServer({
   ],
 });
 await vite.listen();
-console.log(`Groundwork: ${projektMappa}`);
+console.log(`Groundwork: ${projectDir}`);
 vite.printUrls();
 
-// Leállításkor (Ctrl+C, vagy amikor a `node --watch-path` újraindít) a figyelőt is lezárjuk.
-async function leall() {
+// On shutdown (Ctrl+C, or when `node --watch-path` restarts) we close the watcher too.
+async function shutdown() {
   try {
-    await figyelo.close();
+    await watcher.close();
     await vite.close();
   } finally {
     process.exit();
   }
 }
-process.once("SIGINT", leall);
-process.once("SIGTERM", leall);
+process.once("SIGINT", shutdown);
+process.once("SIGTERM", shutdown);

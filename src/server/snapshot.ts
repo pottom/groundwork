@@ -4,198 +4,198 @@ import type { Nodes, Root } from "mdast";
 import { toString } from "mdast-util-to-string";
 import { remark } from "remark";
 
-/** Amit a Groundwork egy projekt mappájából egyszerre, csak olvasva lát. */
-export type Pillanatkep = {
-  projektNev: string;
-  teruletek: Terulet[];
-  most: Most;
+/** What Groundwork sees of a project folder at one moment, reading only. */
+export type Snapshot = {
+  projectName: string;
+  areas: Area[];
+  now: Now;
 };
 
 /**
- * A nem blokkolt agentre és emberre váró, a folyamatban lévő és a blokkolt ticketek, minden területről, sorrendben.
- * Blokkolt az agentre vagy emberre váró ticket, amelynek a `varRa` listája nem üres; a folyamatban lévő
- * (`claimed`) csak a `folyamatban` között van, akkor is, ha blokkolt.
+ * The unblocked tickets awaiting an agent or a human, the in-progress and the blocked tickets, from every area, in order.
+ * A ticket awaiting an agent or a human is blocked when its `waitingOn` list is not empty; an in-progress
+ * (`claimed`) ticket is only in `inProgress`, even when it is blocked.
  */
-export type Most = {
-  indithato: Ticket[];
-  emberreVar: Ticket[];
-  folyamatban: Ticket[];
-  blokkolt: Ticket[];
+export type Now = {
+  startable: Ticket[];
+  awaitingHuman: Ticket[];
+  inProgress: Ticket[];
+  blocked: Ticket[];
 };
 
-/** Egy `.scratch/<slug>/` mappa, amelyben `spec.md` vagy `issues/` van. */
-export type Terulet = {
+/** A `.scratch/<slug>/` folder that has a `spec.md` or an `issues/`. */
+export type Area = {
   slug: string;
-  cim: string;
-  ticketek: Ticket[];
+  title: string;
+  tickets: Ticket[];
 };
 
-/** Egy `.scratch/<slug>/issues/<NN>-<név>.md` fájl. */
+/** A `.scratch/<slug>/issues/<NN>-<name>.md` file. */
 export type Ticket = {
-  szam: string;
-  cim: string;
-  /** A `**Status:**` sor értéke; ha nincs ilyen sor, hiányzik. */
-  allapot?: string;
-  csoport: Allapotcsoport;
-  pipak: Pipak;
+  number: string;
+  title: string;
+  /** The value of the `**Status:**` line; missing if there is no such line. */
+  status?: string;
+  group: StatusGroup;
+  checklist: Checklist;
   /**
-   * A `**Blocked by:**` sor blokkolói közül azok, amelyek nem lezártak, ahogy a sorban állnak.
-   * A blokkoló ugyanazon a területen, szám szerint keresendő; a nem létező nem számít lezártnak.
-   * Egy nyitott ticket akkor blokkolt, ha ez nem üres; a lezárt és az ismeretlen állapotúnál nem számít.
+   * The blockers from the `**Blocked by:**` line that are not closed, in the order they appear on the line.
+   * A blocker is looked up in the same area, by number; one that does not exist does not count as closed.
+   * An open ticket is blocked when this is not empty; for a closed or unknown-status ticket it does not matter.
    */
-  varRa: Blokkolo[];
+  waitingOn: Blocker[];
 };
 
-/** Egy blokkoló, ahogy a `**Blocked by:**` sorban áll, és a címe; a cím hiányzik, ha nincs ilyen számú ticket a területen. */
-export type Blokkolo = { szam: string; cim?: string };
+/** A blocker as it appears on the `**Blocked by:**` line, and its title; the title is missing if the area has no ticket with that number. */
+export type Blocker = { number: string; title?: string };
 
-/** A `- [x]` és az összes (`- [ ]` és `- [x]`) pipa száma egy ticketben. */
-export type Pipak = { kesz: number; osszes: number };
+/** The number of `- [x]` checkboxes and of all (`- [ ]` and `- [x]`) checkboxes in a ticket. */
+export type Checklist = { done: number; total: number };
 
-/** Az állapot csoportja; ami nincs a `csoportok` között, az ismeretlen, a hiányzó állapot is. */
-export type Allapotcsoport = "agentreVar" | "emberreVar" | "folyamatban" | "lezart" | "ismeretlen";
+/** The group of a status; anything not in `statusGroups` is unknown, and so is a missing status. */
+export type StatusGroup = "awaitingAgent" | "awaitingHuman" | "inProgress" | "closed" | "unknown";
 
-const csoportok = new Map<string, Allapotcsoport>([
-  ["ready-for-agent", "agentreVar"],
-  ["ready-for-human", "emberreVar"],
-  ["needs-info", "emberreVar"],
-  ["needs-triage", "emberreVar"],
-  ["claimed", "folyamatban"],
-  ["done", "lezart"],
-  ["closed", "lezart"],
-  ["resolved", "lezart"],
-  ["wontfix", "lezart"],
+const statusGroups = new Map<string, StatusGroup>([
+  ["ready-for-agent", "awaitingAgent"],
+  ["ready-for-human", "awaitingHuman"],
+  ["needs-info", "awaitingHuman"],
+  ["needs-triage", "awaitingHuman"],
+  ["claimed", "inProgress"],
+  ["done", "closed"],
+  ["closed", "closed"],
+  ["resolved", "closed"],
+  ["wontfix", "closed"],
 ]);
 
-export async function olvasPillanatkep(projektMappa: string): Promise<Pillanatkep> {
-  const readme = await haVan(olvasMarkdown(join(projektMappa, "README.md")));
-  const teruletek = await olvasTeruletek(join(projektMappa, ".scratch"));
-  const ticketek = teruletek.flatMap((terulet) => terulet.ticketek);
-  const nemBlokkolt = (csoport: Allapotcsoport) =>
-    ticketek.filter((ticket) => ticket.csoport === csoport && ticket.varRa.length === 0);
+export async function readSnapshot(projectDir: string): Promise<Snapshot> {
+  const readme = await ifExists(readMarkdown(join(projectDir, "README.md")));
+  const areas = await readAreas(join(projectDir, ".scratch"));
+  const tickets = areas.flatMap((area) => area.tickets);
+  const unblocked = (group: StatusGroup) =>
+    tickets.filter((ticket) => ticket.group === group && ticket.waitingOn.length === 0);
   return {
-    projektNev: elsoCimsor(readme) ?? basename(resolve(projektMappa)),
-    teruletek,
-    most: {
-      indithato: nemBlokkolt("agentreVar"),
-      emberreVar: nemBlokkolt("emberreVar"),
-      folyamatban: ticketek.filter((ticket) => ticket.csoport === "folyamatban"),
-      blokkolt: ticketek.filter(
-        (ticket) => (ticket.csoport === "agentreVar" || ticket.csoport === "emberreVar") && ticket.varRa.length > 0,
+    projectName: firstHeading(readme) ?? basename(resolve(projectDir)),
+    areas,
+    now: {
+      startable: unblocked("awaitingAgent"),
+      awaitingHuman: unblocked("awaitingHuman"),
+      inProgress: tickets.filter((ticket) => ticket.group === "inProgress"),
+      blocked: tickets.filter(
+        (ticket) => (ticket.group === "awaitingAgent" || ticket.group === "awaitingHuman") && ticket.waitingOn.length > 0,
       ),
     },
   };
 }
 
-async function olvasTeruletek(scratch: string): Promise<Terulet[]> {
-  const mappak = ((await haVan(readdir(scratch, { withFileTypes: true }))) ?? [])
-    .filter((bejegyzes) => bejegyzes.isDirectory())
-    .map((mappa) => mappa.name)
+async function readAreas(scratch: string): Promise<Area[]> {
+  const dirs = ((await ifExists(readdir(scratch, { withFileTypes: true }))) ?? [])
+    .filter((entry) => entry.isDirectory())
+    .map((dir) => dir.name)
     .sort();
-  const teruletek: Terulet[] = [];
-  for (const slug of mappak) {
-    const tartalom = await readdir(join(scratch, slug), { withFileTypes: true });
-    const vanSpec = tartalom.some((b) => b.name === "spec.md" && b.isFile());
-    const vanIssues = tartalom.some((b) => b.name === "issues" && b.isDirectory());
-    if (!vanSpec && !vanIssues) continue;
-    const spec = vanSpec ? await olvasMarkdown(join(scratch, slug, "spec.md")) : undefined;
-    const ticketek = vanIssues ? await olvasTicketek(join(scratch, slug, "issues")) : [];
-    teruletek.push({ slug, cim: elsoCimsor(spec) ?? slug, ticketek });
+  const areas: Area[] = [];
+  for (const slug of dirs) {
+    const contents = await readdir(join(scratch, slug), { withFileTypes: true });
+    const hasSpec = contents.some((e) => e.name === "spec.md" && e.isFile());
+    const hasIssues = contents.some((e) => e.name === "issues" && e.isDirectory());
+    if (!hasSpec && !hasIssues) continue;
+    const spec = hasSpec ? await readMarkdown(join(scratch, slug, "spec.md")) : undefined;
+    const tickets = hasIssues ? await readTickets(join(scratch, slug, "issues")) : [];
+    areas.push({ slug, title: firstHeading(spec) ?? slug, tickets });
   }
-  return teruletek;
+  return areas;
 }
 
-/** A terület ticketjei szám szerint; a ticket címe a `# NN: Cím` címsorból, ennek hiányában a fájlnévből. */
-async function olvasTicketek(issues: string): Promise<Ticket[]> {
-  const ticketek: (Omit<Ticket, "varRa"> & { blokkolok: string[] })[] = [];
-  // Név szerint előre rendezve, hogy az azonos számú ticketek sorrendje is állandó legyen.
-  const fajlok = (await readdir(issues, { withFileTypes: true })).sort((a, b) => (a.name < b.name ? -1 : 1));
-  for (const fajl of fajlok) {
-    const nev = fajl.isFile() && /^(\d+)-(.+)\.md$/.exec(fajl.name);
-    if (!nev) continue;
-    const ticket = await olvasMarkdown(join(issues, fajl.name));
-    const cimsor = elsoCimsor(ticket);
-    const allapot = mezo(ticket, "Status");
-    ticketek.push({
-      szam: nev[1],
-      cim: cimsor ? (/^\d+:\s*(.+)$/.exec(cimsor)?.[1] ?? cimsor) : nev[2],
-      allapot,
-      csoport: csoportok.get(allapot ?? "") ?? "ismeretlen",
-      pipak: pipak(ticket),
-      blokkolok: olvasBlokkolok(mezo(ticket, "Blocked by")),
+/** The area's tickets by number; a ticket's title comes from its `# NN: Title` heading, or failing that, from the file name. */
+async function readTickets(issues: string): Promise<Ticket[]> {
+  const tickets: (Omit<Ticket, "waitingOn"> & { blockers: string[] })[] = [];
+  // Sorted by name first, so that tickets with the same number also keep a stable order.
+  const files = (await readdir(issues, { withFileTypes: true })).sort((a, b) => (a.name < b.name ? -1 : 1));
+  for (const file of files) {
+    const name = file.isFile() && /^(\d+)-(.+)\.md$/.exec(file.name);
+    if (!name) continue;
+    const ticket = await readMarkdown(join(issues, file.name));
+    const heading = firstHeading(ticket);
+    const status = field(ticket, "Status");
+    tickets.push({
+      number: name[1],
+      title: heading ? (/^\d+:\s*(.+)$/.exec(heading)?.[1] ?? heading) : name[2],
+      status,
+      group: statusGroups.get(status ?? "") ?? "unknown",
+      checklist: countChecklist(ticket),
+      blockers: parseBlockers(field(ticket, "Blocked by")),
     });
   }
-  ticketek.sort((a, b) => Number(a.szam) - Number(b.szam));
-  return ticketek.map(({ blokkolok, ...ticket }) => ({
+  tickets.sort((a, b) => Number(a.number) - Number(b.number));
+  return tickets.map(({ blockers, ...ticket }) => ({
     ...ticket,
-    varRa: blokkolok.flatMap((blokkolo) => {
-      // A blokkoló számú ticketek a területen; a nem szám blokkolóhoz nincs ilyen.
-      const ilyenek = /^\d+$/.test(blokkolo)
-        ? ticketek.filter((masik) => Number(masik.szam) === Number(blokkolo))
+    waitingOn: blockers.flatMap((blocker) => {
+      // The tickets in the area with the blocker's number; a non-numeric blocker has none.
+      const matches = /^\d+$/.test(blocker)
+        ? tickets.filter((other) => Number(other.number) === Number(blocker))
         : [];
-      // Lezárt, ha van ilyen számú ticket, és mind lezárt; ekkor már nem vár rá.
-      if (ilyenek.length > 0 && ilyenek.every((masik) => masik.csoport === "lezart")) return [];
-      return ilyenek.length > 0 ? [{ szam: blokkolo, cim: ilyenek[0].cim }] : [{ szam: blokkolo }];
+      // Closed if there are tickets with that number and all of them are closed; then it no longer waits on it.
+      if (matches.length > 0 && matches.every((other) => other.group === "closed")) return [];
+      return matches.length > 0 ? [{ number: blocker, title: matches[0].title }] : [{ number: blocker }];
     }),
   }));
 }
 
-/** A `**Blocked by:**` érték vesszővel elválasztott elemei; a `None…` kezdetű vagy hiányzó érték üres lista. */
-function olvasBlokkolok(ertek: string | undefined): string[] {
-  if (!ertek || ertek.startsWith("None")) return [];
-  return ertek
+/** The comma-separated items of a `**Blocked by:**` value; a value starting with `None…`, or a missing one, is an empty list. */
+function parseBlockers(value: string | undefined): string[] {
+  if (!value || value.startsWith("None")) return [];
+  return value
     .split(",")
-    .map((elem) => elem.trim())
-    .filter((elem) => elem !== "");
+    .map((item) => item.trim())
+    .filter((item) => item !== "");
 }
 
-async function olvasMarkdown(fajl: string): Promise<Root> {
-  return remark().parse(await readFile(fajl, "utf8"));
+async function readMarkdown(file: string): Promise<Root> {
+  return remark().parse(await readFile(file, "utf8"));
 }
 
-/** Az első `#` címsor szövege, vagy undefined, ha nincs (vagy üres). */
-function elsoCimsor(fa: Root | undefined): string | undefined {
-  const cimsor = fa?.children.find((elem) => elem.type === "heading" && elem.depth === 1);
-  return (cimsor && toString(cimsor)) || undefined;
+/** The text of the first `#` heading, or undefined if there is none (or it is empty). */
+function firstHeading(tree: Root | undefined): string | undefined {
+  const heading = tree?.children.find((node) => node.type === "heading" && node.depth === 1);
+  return (heading && toString(heading)) || undefined;
 }
 
-/** A `**Név:** érték` alakú bekezdés értéke, vagy undefined, ha nincs (vagy üres). */
-function mezo(fa: Root, nev: string): string | undefined {
-  const cimke = `${nev}:`;
-  const bekezdes = fa.children.find(
-    (elem) =>
-      elem.type === "paragraph" && elem.children[0]?.type === "strong" && toString(elem.children[0]) === cimke,
+/** The value of a `**Name:** value` paragraph, or undefined if there is none (or it is empty). */
+function field(tree: Root, name: string): string | undefined {
+  const label = `${name}:`;
+  const paragraph = tree.children.find(
+    (node) =>
+      node.type === "paragraph" && node.children[0]?.type === "strong" && toString(node.children[0]) === label,
   );
-  return (bekezdes && toString(bekezdes).slice(cimke.length).trim()) || undefined;
+  return (paragraph && toString(paragraph).slice(label.length).trim()) || undefined;
 }
 
 /**
- * A pipás listaelemek (`- [ ] …`, `- [x] …`) a fában, bármilyen mélyen; a kódblokkban állók nem.
- * A remark GFM nélkül nem ismeri a pipát, ezért a listaelem szövegének elejéről olvassuk.
+ * The checkbox list items (`- [ ] …`, `- [x] …`) in the tree, at any depth; those inside a code block are not.
+ * Without GFM, remark does not know checkboxes, so we read them from the start of the list item's text.
  */
-function pipak(fa: Nodes): Pipak {
-  const eredmeny: Pipak = { kesz: 0, osszes: 0 };
-  if (fa.type === "listItem" && fa.children[0]?.type === "paragraph") {
-    const pipa = /^\[([ xX])\]\s/.exec(toString(fa.children[0]));
-    if (pipa) {
-      eredmeny.osszes++;
-      if (pipa[1] !== " ") eredmeny.kesz++;
+function countChecklist(tree: Nodes): Checklist {
+  const result: Checklist = { done: 0, total: 0 };
+  if (tree.type === "listItem" && tree.children[0]?.type === "paragraph") {
+    const checkbox = /^\[([ xX])\]\s/.exec(toString(tree.children[0]));
+    if (checkbox) {
+      result.total++;
+      if (checkbox[1] !== " ") result.done++;
     }
   }
-  for (const gyerek of "children" in fa ? fa.children : []) {
-    const alatta = pipak(gyerek);
-    eredmeny.kesz += alatta.kesz;
-    eredmeny.osszes += alatta.osszes;
+  for (const child of "children" in tree ? tree.children : []) {
+    const below = countChecklist(child);
+    result.done += below.done;
+    result.total += below.total;
   }
-  return eredmeny;
+  return result;
 }
 
-/** A fájlművelet eredménye, vagy undefined, ha a fájl vagy mappa nem létezik. */
-async function haVan<T>(muvelet: Promise<T>): Promise<T | undefined> {
+/** The result of a file operation, or undefined if the file or folder does not exist. */
+async function ifExists<T>(operation: Promise<T>): Promise<T | undefined> {
   try {
-    return await muvelet;
-  } catch (hiba) {
-    if ((hiba as NodeJS.ErrnoException).code === "ENOENT") return undefined;
-    throw hiba;
+    return await operation;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
   }
 }

@@ -1,25 +1,25 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import { olvasPillanatkep } from "./snapshot.ts";
+import { readSnapshot } from "./snapshot.ts";
 
 /**
- * A Groundwork API-ja: egy projekt mappájáról ad pillanatképet, és egy Server-Sent Events
- * kapcsolaton jelzi a böngészőnek, ha a projekt változott. A jelzést a `valtozott()` küldi
- * minden nyitott kapcsolatnak; a figyelőt (`watcher.ts`) az indító köti hozzá.
+ * The Groundwork API: serves a snapshot of a project folder, and tells the browser over a
+ * Server-Sent Events connection when the project has changed. `notifyChange()` sends the
+ * notification to every open connection; the launcher wires the watcher (`watcher.ts`) to it.
  */
-export function groundworkApi(projektMappa: string) {
-  const kapcsolatok = new Set<() => void>();
+export function groundworkApi(projectDir: string) {
+  const connections = new Set<() => void>();
 
   const app = new Hono()
-    .get("/api/pillanatkep", async (c) => c.json(await olvasPillanatkep(projektMappa)))
-    .get("/api/valtozasok", (c) =>
+    .get("/api/snapshot", async (c) => c.json(await readSnapshot(projectDir)))
+    .get("/api/changes", (c) =>
       streamSSE(c, async (stream) => {
-        const jelez = () => void stream.writeSSE({ event: "valtozott", data: "" });
-        kapcsolatok.add(jelez);
+        const notify = () => void stream.writeSSE({ event: "changed", data: "" });
+        connections.add(notify);
         await new Promise<void>((resolve) => stream.onAbort(resolve));
-        kapcsolatok.delete(jelez);
+        connections.delete(notify);
       }),
     );
 
-  return { app, valtozott: () => kapcsolatok.forEach((jelez) => jelez()) };
+  return { app, notifyChange: () => connections.forEach((notify) => notify()) };
 }

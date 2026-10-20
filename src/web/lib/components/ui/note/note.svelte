@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
 
-  /** Rövid, halk megjegyzés, például egy üres csoport helyén. */
+  /** A short, quiet note, for example in place of an empty group. */
   let { children }: { children: Snippet } = $props();
 </script>
 

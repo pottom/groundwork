@@ -2,9 +2,9 @@
   import type { Snippet } from "svelte";
 
   /**
-   * Egy kis, halk sor egy `Item` címe alatt, például egy blokkoló, amelyre a ticket vár.
-   * `label`: rövid előtag (például „vár”). `number`: utána, a sorok számaival egy betűtípussal.
-   * `warning`: figyelmet kér, például egy nem létező blokkoló.
+   * A small, quiet line under an `Item`'s title, for example a blocker the ticket waits on.
+   * `label`: a short prefix (for example "vár"). `number`: after it, in the same typeface as the rows' numbers.
+   * `warning`: asks for attention, for example a blocker that does not exist.
    */
   let {
     label,

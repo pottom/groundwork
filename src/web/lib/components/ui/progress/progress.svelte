@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** Mennyi kész az összesből, például „2/7”. Ha nincs mit számolni, üres hely marad, hogy az oszlop egyben álljon. */
+  /** How many are done out of the total, for example "2/7". If there is nothing to count, an empty space remains so the column stays aligned. */
   let { done, total }: { done: number; total: number } = $props();
 </script>
 

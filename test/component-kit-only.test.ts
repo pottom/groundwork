@@ -3,24 +3,24 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
-// ADR 0005: a komponenskészleten kívül egyetlen Svelte-fájlban sincs `class`, `style` vagy `<style>`.
+// ADR 0005: outside the component kit, no Svelte file has `class`, `style` or `<style>`.
 
-const forras = fileURLToPath(new URL("../src", import.meta.url));
-const komponenskeszlet = "web/lib/components/ui/";
-const tiltott = /\bclass\s*[=:]|\bstyle\s*[=:]|<style[\s>]/;
+const source = fileURLToPath(new URL("../src", import.meta.url));
+const componentKit = "web/lib/components/ui/";
+const forbidden = /\bclass\s*[=:]|\bstyle\s*[=:]|<style[\s>]/;
 
-test("a komponenskészleten kívül egyik Svelte-fájlban sincs saját stílus", async () => {
-  const svelteFajlok = (await readdir(forras, { recursive: true }))
+test("no Svelte file outside the component kit has its own styling", async () => {
+  const svelteFiles = (await readdir(source, { recursive: true }))
     .filter((f) => f.endsWith(".svelte"))
-    .filter((f) => !f.startsWith(komponenskeszlet));
-  expect(svelteFajlok, "nincs ellenőrizhető Svelte-fájl").not.toEqual([]);
+    .filter((f) => !f.startsWith(componentKit));
+  expect(svelteFiles, "there are no Svelte files to check").not.toEqual([]);
 
-  const sertesek: string[] = [];
-  for (const fajl of svelteFajlok) {
-    const sorok = (await readFile(join(forras, fajl), "utf8")).split("\n");
-    sorok.forEach((sor, i) => {
-      if (tiltott.test(sor)) sertesek.push(`${relative(".", join(forras, fajl))}:${i + 1}: ${sor.trim()}`);
+  const violations: string[] = [];
+  for (const file of svelteFiles) {
+    const lines = (await readFile(join(source, file), "utf8")).split("\n");
+    lines.forEach((line, i) => {
+      if (forbidden.test(line)) violations.push(`${relative(".", join(source, file))}:${i + 1}: ${line.trim()}`);
     });
   }
-  expect(sertesek).toEqual([]);
+  expect(violations).toEqual([]);
 });

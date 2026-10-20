@@ -2,9 +2,9 @@
   import type { Snippet } from "svelte";
 
   /**
-   * Egy sor az `ItemList`-ben: szám, cím, és a végén például egy `Badge` és egy `Progress`.
-   * `dimmed`: halványan, hogy a többi sor kiemelkedjen (például egy lezárt ticket).
-   * `details`: a cím alatt, például `Detail` sorok (mire vár egy blokkolt ticket).
+   * A row in an `ItemList`: number, title, and at the end, for example, a `Badge` and a `Progress`.
+   * `dimmed`: faded, so the other rows stand out (for example a closed ticket).
+   * `details`: under the title, for example `Detail` lines (what a blocked ticket waits on).
    */
   let {
     number,

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* Közös design tokenek: a shadcn-svelte „stone” alapszínei, és egy saját
-   borostyánszínű `warning` (Tailwind amber-700, sötétben amber-500).
-   A sötét mód a rendszer beállítását követi (prefers-color-scheme). */
+/* Shared design tokens: the shadcn-svelte "stone" base colors, and our own
+   amber `warning` (Tailwind amber-700, amber-500 in dark mode).
+   Dark mode follows the system setting (prefers-color-scheme). */
 
 @custom-variant dark (@media (prefers-color-scheme: dark));
 

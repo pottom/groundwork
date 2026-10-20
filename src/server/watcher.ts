@@ -1,35 +1,35 @@
 import { relative, sep } from "node:path";
 import { watch } from "chokidar";
 
-/** Egy futó figyelő; a `close()` leállítja. */
-export type Figyelo = { close(): Promise<void> };
+/** A running watcher; `close()` stops it. */
+export type Watcher = { close(): Promise<void> };
 
-/** Ennyi ideig vár a változások után, mielőtt jelez: egy gyors sorozat így egy jelzés. */
-const osszevonasMs = 200;
+/** How long to wait after changes before notifying: a quick burst becomes a single notification. */
+const debounceMs = 200;
 
 /**
- * Figyeli a projekt mappájában azt, amit a pillanatkép megmutat: a `.scratch/` alatt
- * bármit és a gyökér `README.md`-t. Ha ezek közül valami változik (módosul, létrejön
- * vagy törlődik), meghívja a `valtozott` visszahívást, a gyors sorozatokat összevonva.
- * Csak olvas, a projektbe nem ír (ADR 0001). Akkor tér vissza, amikor a figyelés kész.
+ * Watches what the snapshot shows in the project folder: anything under `.scratch/` and the
+ * root `README.md`. If any of these changes (is modified, created or deleted), it calls the
+ * `onChange` callback, debouncing quick bursts. It only reads, it never writes to the project
+ * (ADR 0001). Returns once watching is ready.
  */
-export async function figyel(projektMappa: string, valtozott: () => void): Promise<Figyelo> {
-  const figyelt = (utvonal: string) => {
-    const resz = relative(projektMappa, utvonal);
-    return resz === "" || resz === "README.md" || resz === ".scratch" || resz.startsWith(`.scratch${sep}`);
+export async function watchProject(projectDir: string, onChange: () => void): Promise<Watcher> {
+  const isWatched = (path: string) => {
+    const rel = relative(projectDir, path);
+    return rel === "" || rel === "README.md" || rel === ".scratch" || rel.startsWith(`.scratch${sep}`);
   };
 
-  let idozito: NodeJS.Timeout | undefined;
-  const watcher = watch(projektMappa, {
-    ignored: (utvonal) => !figyelt(utvonal),
+  let timer: NodeJS.Timeout | undefined;
+  const watcher = watch(projectDir, {
+    ignored: (path) => !isWatched(path),
     ignoreInitial: true,
   });
-  watcher.on("all", (_esemeny, utvonal) => {
-    if (utvonal === projektMappa) return;
-    clearTimeout(idozito);
-    idozito = setTimeout(valtozott, osszevonasMs);
+  watcher.on("all", (_event, path) => {
+    if (path === projectDir) return;
+    clearTimeout(timer);
+    timer = setTimeout(onChange, debounceMs);
   });
-  watcher.on("error", (hiba) => console.error("Groundwork: a figyelés hibát jelzett:", hiba));
+  watcher.on("error", (error) => console.error("Groundwork: a figyelés hibát jelzett:", error));
   await new Promise<void>((resolve, reject) => {
     watcher.once("ready", resolve);
     watcher.once("error", reject);
@@ -37,9 +37,8 @@ export async function figyel(projektMappa: string, valtozott: () => void): Promi
 
   return {
     async close() {
-      clearTimeout(idozito);
+      clearTimeout(timer);
       await watcher.close();
     },
   };
 }
-

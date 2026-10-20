@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
 
-  /** Egy szakaszon belüli csoport: kis, halk címmel, alatta például egy `ItemList` vagy egy `Note`. */
+  /** A group within a section: with a small, quiet title, and below it, for example, an `ItemList` or a `Note`. */
   let { title, children }: { title: string; children: Snippet } = $props();
 </script>
 
