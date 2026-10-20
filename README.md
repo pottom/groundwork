@@ -17,7 +17,7 @@ npm run dev -- --root ../groundwork-pelda
 
 Aztán: <http://localhost:5173>. A `--root` a megmutatandó projekt mappája; a Groundwork ebbe soha nem ír (ADR 0001).
 
-Fejlesztéskor egy folyamat fut egy porton: a `src/server/dev.ts` elindítja a Vite-ot, amely az oldalt szolgálja ki, a `/api/` kéréseket pedig egy Vite-middleware továbbadja a Hono-appnak. Így nincs proxy és nincs második szerver.
+Fejlesztéskor egy folyamat fut egy porton: a `src/server/dev.ts` elindítja a Vite-ot, amely az oldalt szolgálja ki, a `/api/` kéréseket pedig egy Vite-middleware továbbadja a Hono-appnak. Így nincs proxy és nincs második szerver. Ha a `src/server/` alatt bármi megváltozik, a Node (`--watch-path`) újraindítja a folyamatot, így az oldal mindig a friss szerverkódot látja; a felület változásait a Vite magától frissíti.
 
 ## Ellenőrzés
 

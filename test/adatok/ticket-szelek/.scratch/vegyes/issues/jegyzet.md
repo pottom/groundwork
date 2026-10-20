@@ -1,0 +1,1 @@
+# Jegyzet, nem ticket

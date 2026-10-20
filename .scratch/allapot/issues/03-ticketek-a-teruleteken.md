@@ -4,7 +4,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A példaprojekt területe alatt az öt ticket látszik számmal, címmel és állapottal, szám szerinti sorrendben
 - [ ] Az állapot olvashatóan jelenik meg (például `ready-for-agent`, `ready-for-human`)
