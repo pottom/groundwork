@@ -40,19 +40,33 @@
     }
   }
 
-  // Az első betöltés, aztán a szerver jelzésére újra; megszakadt kapcsolat után
-  // (az EventSource magától újracsatlakozik) is újra, mert közben változhatott valami.
+  // A szerver jelzésére, és minden (újra)csatlakozáskor újra betöltjük a pillanatképet: a
+  // kapcsolat felépülése előtt vagy kiesése alatt is változhatott valami. Hálózati hibánál az
+  // EventSource magától újracsatlakozik; ha végleg lezárta a kapcsolatot (például mert a szerver
+  // újraindulás közben hibát adott), kis szünet után újat nyitunk.
   onMount(() => {
+    let valtozasok: EventSource;
+    let ujraIdozito: ReturnType<typeof setTimeout>;
+
+    function kapcsolodik() {
+      valtozasok = new EventSource("/api/valtozasok");
+      valtozasok.addEventListener("valtozott", betolt);
+      valtozasok.onopen = () => {
+        megszakadt = false;
+        betolt();
+      };
+      valtozasok.onerror = () => {
+        megszakadt = true;
+        if (valtozasok.readyState === EventSource.CLOSED) ujraIdozito = setTimeout(kapcsolodik, 3000);
+      };
+    }
+
     betolt();
-    const valtozasok = new EventSource("/api/valtozasok");
-    valtozasok.addEventListener("valtozott", betolt);
-    valtozasok.onerror = () => (megszakadt = true);
-    valtozasok.onopen = () => {
-      if (!megszakadt) return;
-      megszakadt = false;
-      betolt();
+    kapcsolodik();
+    return () => {
+      clearTimeout(ujraIdozito);
+      valtozasok.close();
     };
-    return () => valtozasok.close();
   });
 </script>
 
@@ -128,5 +142,7 @@
   {/if}
   {#if megszakadt}
     <Notice>A kapcsolat megszakadt, újracsatlakozás…</Notice>
+  {:else if pillanatkep && betoltesiHiba}
+    <Notice>A legutóbbi frissítés nem sikerült, a korábbi állapot látszik.</Notice>
   {/if}
 </Page>

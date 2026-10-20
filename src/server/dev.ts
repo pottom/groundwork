@@ -34,9 +34,12 @@ vite.printUrls();
 
 // Leállításkor (Ctrl+C, vagy amikor a `node --watch-path` újraindít) a figyelőt is lezárjuk.
 async function leall() {
-  await figyelo.close();
-  await vite.close();
-  process.exit();
+  try {
+    await figyelo.close();
+    await vite.close();
+  } finally {
+    process.exit();
+  }
 }
 process.once("SIGINT", leall);
 process.once("SIGTERM", leall);

@@ -5,7 +5,7 @@ import { watch } from "chokidar";
 export type Figyelo = { close(): Promise<void> };
 
 /** Ennyi ideig vár a változások után, mielőtt jelez: egy gyors sorozat így egy jelzés. */
-const osszevonas = 200;
+const osszevonasMs = 200;
 
 /**
  * Figyeli a projekt mappájában azt, amit a pillanatkép megmutat: a `.scratch/` alatt
@@ -27,8 +27,9 @@ export async function figyel(projektMappa: string, valtozott: () => void): Promi
   watcher.on("all", (_esemeny, utvonal) => {
     if (utvonal === projektMappa) return;
     clearTimeout(idozito);
-    idozito = setTimeout(valtozott, osszevonas);
+    idozito = setTimeout(valtozott, osszevonasMs);
   });
+  watcher.on("error", (hiba) => console.error("Groundwork: a figyelés hibát jelzett:", hiba));
   await new Promise<void>((resolve, reject) => {
     watcher.once("ready", resolve);
     watcher.once("error", reject);
