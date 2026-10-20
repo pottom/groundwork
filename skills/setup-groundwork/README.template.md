@@ -1,6 +1,6 @@
 # Groundwork
 
-This folder is everything Groundwork has put into this project, apart from the marked `<!-- groundwork:begin … -->` blocks in `docs/agents/`. Groundwork shows in the browser what the engineering skills record here: specs, tickets and their status, decisions, the glossary. It only reads the project.
+This folder, together with any `<!-- groundwork:begin … -->` marked blocks in `docs/agents/`, is everything Groundwork has put into this project. Groundwork shows in the browser what the engineering skills record here: specs, tickets and their status, decisions, the glossary. It only reads the project.
 
 ## Start
 

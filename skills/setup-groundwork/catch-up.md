@@ -10,7 +10,7 @@ Work through every open ticket, feature folder by feature folder, in ticket-numb
 
 - **Commits**: search `git log` for commits whose message names the ticket (its number with the feature's wording, or its title), and list the files they touch.
 - **Files**: open the files the ticket implies (the modules, tests and pages its text names or the commits touched).
-- **Criteria**: judge each acceptance criterion against the code and tests as **met** (the code or a run shows it), **not met** (the code lacks or contradicts it), or **unverified** (only a person, or a run you cannot do, could tell). Run the project's own test or check command when it runs as the project stands; install nothing.
+- **Criteria**: judge each acceptance criterion against the code and tests as **met** (a run shows it, or the code shows it beyond doubt), **not met** (the code lacks or contradicts it), or **unverified** (only a person, or a run you cannot do, could tell: how a page looks or reads, sizes and contrast, a manual check on a device). Run the project's own test or check command when it runs as the project stands; install nothing.
 
 A ticket is **closable** when it has commits or files that carry its work and none of its criteria is not met. Every other ticket is **not closable**.
 
@@ -42,4 +42,4 @@ Done when each accepted ticket reads `done` with its comment, and `git status` l
 
 ## 4. Finish
 
-Name the tickets you closed, and ask the user to review them with `git diff` and commit them themselves.
+Name the tickets you closed, and ask the user to review them with `git diff` and commit them themselves. Catch-up writes the ticket files only; the footprint is untouched.

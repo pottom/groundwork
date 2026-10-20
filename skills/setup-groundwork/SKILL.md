@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Groundwork is a local, read-only viewer for what the engineering skills (`/setup-matt-pocock-skills` and the rest) leave in a repo. This skill puts in place the little a project needs for it, and takes it out again.
 
-Prompt-driven, not a script: explore, show the plan, and write only after the user approves that exact plan. Talk to the user in the language of the conversation. Everything written to files is English and comes from the templates in this folder, verbatim except for the `{{placeholders}}`, so two runs in the same situation write the same bytes.
+Prompt-driven, not a script: explore, show the plan, and write only after the user approves that exact plan. Talk to the user in the language of the conversation. The footprint is English and comes from the templates in this folder, verbatim except for the `{{placeholders}}`, so two runs in the same situation write the same bytes.
 
 A goal named in the call (e.g. `/setup-groundwork remove`) goes straight to that option; the plan still needs the user's approval.
 
@@ -38,7 +38,7 @@ Read what exists; assume nothing:
 
 - `docs/agents/`: has `/setup-matt-pocock-skills` run here?
 - `docs/agents/issue-tracker.md`: is the tracker **local** (markdown files under `.scratch/`) or something else (GitHub, GitLab, Jira…)? A missing file leaves the tracker unknown.
-- A `## Closing a ticket` section in that file: absent, inside a `closing-a-ticket` marked block, or **unmarked** (the user's own). If unmarked, compare its text with [closing-a-ticket.md](closing-a-ticket.md).
+- A `## Closing a ticket` section in that file (from that heading up to the next `## ` heading or the end of the file): absent, inside a `closing-a-ticket` marked block, or **unmarked** (the user's own). If unmarked, compare its text with [closing-a-ticket.md](closing-a-ticket.md).
 - `.groundwork/`: absent, or what its two files hold.
 - With a local tracker, the **open tickets**: ticket files under `.scratch/*/issues/` whose `Status:` is neither `done` nor `wontfix`.
 
@@ -62,6 +62,6 @@ Make exactly the approved changes, nothing more. Never commit.
 
 ### 5. Finish
 
-Tell the user what you wrote, and ask them to review it with `git diff` and commit it themselves. Tell them how to start Groundwork: the command in `.groundwork/README.md`. If the version lookup failed earlier, add that the command works once that version is published.
+Tell the user what you wrote, and ask them to review it with `git status` and `git diff` (new files show only in the status) and commit it themselves. Tell them how to start Groundwork: the command in `.groundwork/README.md`. If the version lookup failed earlier, add that the command works once that version is published.
 
 After a preparation with a local tracker and open tickets, offer the catch-up: closing the open tickets whose work is already done, each one only if the user accepts it. On a yes, follow [catch-up.md](catch-up.md). Otherwise the catch-up stays unmentioned.
