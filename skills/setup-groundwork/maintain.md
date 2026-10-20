@@ -23,10 +23,10 @@ List the options and wait for the user's choice:
 - **Repair** (only when the check found a deviation): the plan rewrites each deviating item to its expected form: `config.json` in the SKILL.md shape (keep a readable `version`; if there is none, ask for one as in [prepare.md](prepare.md) step 1), `README.md` regenerated from it, the block replaced by or inserted as the template, extra copies removed.
 - **Remove**: see below.
 - **Update the pinned version**: follow [update.md](update.md).
-- **Catch up open tickets**: follow [catch-up.md](catch-up.md).
+- **Catch up open tickets** (only with a local tracker and open tickets): follow [catch-up.md](catch-up.md).
 - **Change the launch mode** and **the offline image command**: listed as coming later, with container support.
 
-Done when the user has picked one option. Until then, write nothing.
+Done when the user has picked one option. Until then, write nothing. When they pick none, tell them nothing changed, and stop.
 
 ## Remove
 
@@ -37,4 +37,4 @@ The plan deletes the footprint and keeps everything else exactly as it is:
 
 An unmarked `## Closing a ticket` section is the user's own and stays. Ticket files stay as they are, closed tickets included.
 
-After writing, check that no marker line and no `.groundwork/` remain. In the finish, there is no start command to give: say that Groundwork is removed and ask for the `git diff` review.
+After writing, check that no marker line and no `.groundwork/` remain. In the finish, there is no start command to give: say that Groundwork is removed, and ask the user to review it with `git status` and `git diff` and commit it themselves.

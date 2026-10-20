@@ -10,7 +10,7 @@ Groundwork is a local, read-only viewer for what the engineering skills (`/setup
 
 Prompt-driven, not a script: explore, show the plan, and write only after the user approves that exact plan. Talk to the user in the language of the conversation. The footprint is English and comes from the templates in this folder, verbatim except for the `{{placeholders}}`, so two runs in the same situation write the same bytes.
 
-A goal named in the call (e.g. `/setup-groundwork remove`) goes straight to that option; the plan still needs the user's approval.
+A goal named in the call (e.g. `/setup-groundwork remove`) goes straight to that option in a prepared project; the plan still needs the user's approval. In a project without `.groundwork/`, say it is not prepared yet and offer the preparation instead.
 
 ## The footprint
 
@@ -64,4 +64,4 @@ Make exactly the approved changes, nothing more. Never commit.
 
 Tell the user what you wrote, and ask them to review it with `git status` and `git diff` (new files show only in the status) and commit it themselves. Tell them how to start Groundwork: the command in `.groundwork/README.md`. If the version lookup failed earlier, add that the command works once that version is published.
 
-After a preparation with a local tracker and open tickets, offer the catch-up: closing the open tickets whose work is already done, each one only if the user accepts it. On a yes, follow [catch-up.md](catch-up.md). Otherwise the catch-up stays unmentioned.
+Last, after a preparation with a local tracker and open tickets, offer the catch-up: closing the open tickets whose work is already done, each one only if the user accepts it. On a yes, follow [catch-up.md](catch-up.md). Otherwise the catch-up stays unmentioned.

@@ -6,7 +6,7 @@ Builds the plan for a project without `.groundwork/`. Steps 3–5 of [SKILL.md](
 
 Look up the current version: `npm view <package> version`, with the package named in [SKILL.md](SKILL.md). Pin exactly that version, e.g. `0.2.0`.
 
-If the lookup fails (the package is not published yet, or there is no network), say so and ask the user which exact version to pin, before you show the plan. Pin `latest` only when the user asks for it in so many words.
+If the lookup fails (the package is not published yet, or there is no network), say so and ask the user which exact version to pin, together with what you found, before you show the plan. Pin `latest` only when the user asks for it in so many words.
 
 ## 2. The launch mode
 
@@ -30,4 +30,4 @@ Insert the text of [closing-a-ticket.md](closing-a-ticket.md) right after the `#
 
 - Create `.groundwork/config.json` with the version and `"launch": "npx"`, in the shape given in [SKILL.md](SKILL.md).
 - Create `.groundwork/README.md` from [README.template.md](README.template.md): replace `{{package}}` with the package name and `{{version}}` with the pinned version.
-- The outcome of step 3: the marked block to add, or the warning or notice, with the diff when there is one, and the statement that `docs/agents/issue-tracker.md` stays unchanged.
+- The outcome of step 3: either the marked block to add, or the warning or notice (with the diff when there is one) and the statement that `docs/agents/issue-tracker.md` stays unchanged.
