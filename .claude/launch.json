@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--", "--root", "../groundwork-pelda"],
       "port": 5173
+    },
+    {
+      "name": "vegtermek-pelda",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dist/groundwork/groundwork.mjs", "--root", "../groundwork-pelda", "--no-open", "--port", "4477"],
+      "port": 4477
     }
   ]
 }
