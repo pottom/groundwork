@@ -29,4 +29,31 @@ describe("pillanatkép", () => {
     const pillanatkep = await olvasPillanatkep(mappa);
     expect(pillanatkep.projektNev).toBe("readme-nelkuli-projekt");
   });
+
+  test("a terület címe a spec első címsora", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
+    expect(pillanatkep.teruletek).toEqual([
+      { slug: "aktualis-idojaras", cim: "Aktuális időjárás egy Településen" },
+    ]);
+  });
+
+  test("ha a specben nincs első szintű címsor, a terület címe a slug", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("cim-nelkuli-spec"));
+    expect(pillanatkep.teruletek).toEqual([{ slug: "uj-otlet", cim: "uj-otlet" }]);
+  });
+
+  test("spec nélkül, csak ticketekkel is terület, a slugjával", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("csak-ticketek"));
+    expect(pillanatkep.teruletek).toEqual([{ slug: "kis-javitasok", cim: "kis-javitasok" }]);
+  });
+
+  test("a spec és issues/ nélküli mappa és a laza fájl nem terület", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("nem-terulet"));
+    expect(pillanatkep.teruletek).toEqual([]);
+  });
+
+  test("ha nincs .scratch, nincs terület", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("cimsor-nelkuli-readme"));
+    expect(pillanatkep.teruletek).toEqual([]);
+  });
 });

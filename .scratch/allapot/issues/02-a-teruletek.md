@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A példaprojekten egy terület látszik: „Aktuális időjárás egy Településen”
 - [ ] Cím nélküli specnél a terület a slugjával látszik
