@@ -24,15 +24,17 @@ export async function olvasPillanatkep(projektMappa: string): Promise<Pillanatke
 }
 
 async function olvasTeruletek(scratch: string): Promise<Terulet[]> {
-  const teruletek: Terulet[] = [];
   const mappak = ((await haVan(readdir(scratch, { withFileTypes: true }))) ?? [])
     .filter((bejegyzes) => bejegyzes.isDirectory())
     .map((mappa) => mappa.name)
     .sort();
+  const teruletek: Terulet[] = [];
   for (const slug of mappak) {
-    const tartalom = await readdir(join(scratch, slug));
-    if (!tartalom.includes("spec.md") && !tartalom.includes("issues")) continue;
-    const spec = await haVan(readFile(join(scratch, slug, "spec.md"), "utf8"));
+    const tartalom = await readdir(join(scratch, slug), { withFileTypes: true });
+    const vanSpec = tartalom.some((b) => b.name === "spec.md" && b.isFile());
+    const vanIssues = tartalom.some((b) => b.name === "issues" && b.isDirectory());
+    if (!vanSpec && !vanIssues) continue;
+    const spec = vanSpec ? await readFile(join(scratch, slug, "spec.md"), "utf8") : undefined;
     teruletek.push({ slug, cim: elsoCimsor(spec) ?? slug });
   }
   return teruletek;

@@ -1,0 +1,1 @@
+# Mappa spec.md névvel

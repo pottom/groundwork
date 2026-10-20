@@ -47,7 +47,7 @@ describe("pillanatkép", () => {
     expect(pillanatkep.teruletek).toEqual([{ slug: "kis-javitasok", cim: "kis-javitasok" }]);
   });
 
-  test("a spec és issues/ nélküli mappa és a laza fájl nem terület", async () => {
+  test("a spec.md fájl és issues/ mappa nélküli mappa és a laza fájl nem terület", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("nem-terulet"));
     expect(pillanatkep.teruletek).toEqual([]);
   });
