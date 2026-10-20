@@ -4,13 +4,17 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `npm run build` elkészíti a végtermék mappáját, és kiírja a méretét
-- [ ] A mappa `node_modules` nélküli helyre másolva is elindul csak Node-dal (füstteszt)
-- [ ] `--root`, `--port`, `--no-open`, `--help` működik; foglalt portnál a következő szabadot használja és kiírja
-- [ ] Nem létező `--root` mappára érthető hibaüzenet
-- [ ] Csak 127.0.0.1-en figyel
-- [ ] A példaprojekten ugyanazt mutatja, mint fejlesztői módban, élő frissítéssel
-- [ ] Ctrl+C-re tisztán leáll
-- [ ] `npm run check` zöld
+- [x] `npm run build` elkészíti a végtermék mappáját, és kiírja a méretét
+- [x] A mappa `node_modules` nélküli helyre másolva is elindul csak Node-dal (füstteszt)
+- [x] `--root`, `--port`, `--no-open`, `--help` működik; foglalt portnál a következő szabadot használja és kiírja
+- [x] Nem létező `--root` mappára érthető hibaüzenet
+- [x] Csak 127.0.0.1-en figyel
+- [x] A példaprojekten ugyanazt mutatja, mint fejlesztői módban, élő frissítéssel
+- [x] Ctrl+C-re tisztán leáll
+- [x] `npm run check` zöld
+
+## Comments
+
+**2026-10-20, átnézve és elfogadva:** három commitban (`3037184`, `77b2f2e`, `dee2091`). `npm run build` → `dist/groundwork/` (603,6 kB: `groundwork.mjs` 547,1 kB, felület 56,5 kB). 41 teszt zöld, ebből 8 a `node_modules` nélküli füstteszt. A példaprojekten a 4477-es porton ugyanazt mutatja, mint fejlesztői módban. Nyitott: a szerver nincs minifikálva (kb. 240 kB lenne), a Windows-os böngészőnyitás nincs kipróbálva.
