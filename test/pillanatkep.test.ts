@@ -39,12 +39,47 @@ describe("pillanatkép", () => {
 
   test("a terület ticketjei számmal, címmel és állapottal, szám szerint", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
-    expect(pillanatkep.teruletek[0].ticketek).toEqual([
+    expect(pillanatkep.teruletek[0].ticketek).toMatchObject([
       { szam: "01", cim: "Végigfutó váz: egy Település hőmérséklete", allapot: "ready-for-agent" },
       { szam: "02", cim: "Azonos nevű Települések: választás megyével", allapot: "ready-for-agent" },
       { szam: "03", cim: "Szélerősség és Égkép a kártyán", allapot: "ready-for-agent" },
       { szam: "04", cim: "Érthető hibák", allapot: "ready-for-agent" },
       { szam: "05", cim: "Kézi ellenőrzés telefonon", allapot: "ready-for-human" },
+    ]);
+  });
+
+  test("a ticket pipáinak aránya a - [ ] és - [x] sorokból", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("pelda-3-ticketek"));
+    expect(pillanatkep.teruletek[0].ticketek.map((t) => t.pipak)).toEqual([
+      { kesz: 0, osszes: 7 },
+      { kesz: 0, osszes: 7 },
+      { kesz: 0, osszes: 5 },
+      { kesz: 0, osszes: 7 },
+      { kesz: 0, osszes: 4 },
+    ]);
+  });
+
+  test("pipa a beágyazott listaelem is, a kódblokkban álló és a szóköz nélküli nem", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("pipa-szelek"));
+    expect(pillanatkep.teruletek[0].ticketek[0].pipak).toEqual({ kesz: 3, osszes: 4 });
+  });
+
+  test("a done, closed, resolved és wontfix állapotú ticket lezárt, a többi nyitott", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("lezart-ticketek"));
+    expect(pillanatkep.teruletek[0].ticketek.map(({ allapot, csoport }) => ({ allapot, csoport }))).toEqual([
+      { allapot: "done", csoport: "lezart" },
+      { allapot: "closed", csoport: "lezart" },
+      { allapot: "resolved", csoport: "lezart" },
+      { allapot: "wontfix", csoport: "lezart" },
+      { allapot: "ready-for-agent", csoport: "nyitott" },
+    ]);
+  });
+
+  test("az ismeretlen állapotú ticket is látszik, a nyers állapotával", async () => {
+    const pillanatkep = await olvasPillanatkep(adatMappa("ismeretlen-allapot"));
+    expect(pillanatkep.teruletek[0].ticketek).toMatchObject([
+      { szam: "01", cim: "Átnézésre vár", allapot: "in-review", csoport: "ismeretlen" },
+      { szam: "02", cim: "Indítható", allapot: "ready-for-agent", csoport: "nyitott" },
     ]);
   });
 
@@ -55,7 +90,7 @@ describe("pillanatkép", () => {
 
   test("spec nélkül, csak ticketekkel is terület, a slugjával", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("csak-ticketek"));
-    expect(pillanatkep.teruletek).toEqual([
+    expect(pillanatkep.teruletek).toMatchObject([
       {
         slug: "kis-javitasok",
         cim: "kis-javitasok",
@@ -64,14 +99,14 @@ describe("pillanatkép", () => {
     ]);
   });
 
-  test("a ticket száma a fájlnévből, a címe a címsorból vagy a fájlnévből, az állapota a Status sorból", async () => {
+  test("a ticket száma a fájlnévből, a címe a címsorból vagy a fájlnévből, az állapota a Status sorból, hiányában ismeretlen", async () => {
     const pillanatkep = await olvasPillanatkep(adatMappa("ticket-szelek"));
-    expect(pillanatkep.teruletek[0].ticketek).toEqual([
-      { szam: "2", cim: "Második", allapot: "ready-for-agent" },
-      { szam: "03", cim: "Cím szám nélkül", allapot: "claimed" },
-      { szam: "04", cim: "cimsor-nelkuli", allapot: "needs-info" },
-      { szam: "06", cim: "Állapot nélkül" },
-      { szam: "10", cim: "Tizedik", allapot: "needs-triage" },
+    expect(pillanatkep.teruletek[0].ticketek.map(({ szam, cim, allapot, csoport }) => ({ szam, cim, allapot, csoport }))).toEqual([
+      { szam: "2", cim: "Második", allapot: "ready-for-agent", csoport: "nyitott" },
+      { szam: "03", cim: "Cím szám nélkül", allapot: "claimed", csoport: "nyitott" },
+      { szam: "04", cim: "cimsor-nelkuli", allapot: "needs-info", csoport: "nyitott" },
+      { szam: "06", cim: "Állapot nélkül", csoport: "ismeretlen" },
+      { szam: "10", cim: "Tizedik", allapot: "needs-triage", csoport: "nyitott" },
     ]);
   });
 

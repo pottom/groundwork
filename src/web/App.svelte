@@ -5,6 +5,7 @@
   import { Item } from "$lib/components/ui/item";
   import { ItemList } from "$lib/components/ui/item-list";
   import { Page } from "$lib/components/ui/page";
+  import { Progress } from "$lib/components/ui/progress";
   import { Section } from "$lib/components/ui/section";
   import { Stack } from "$lib/components/ui/stack";
   import { Subheading } from "$lib/components/ui/subheading";
@@ -29,10 +30,11 @@
           {#if terulet.ticketek.length > 0}
             <ItemList>
               {#each terulet.ticketek as ticket}
-                <Item number={ticket.szam} title={ticket.cim}>
+                <Item number={ticket.szam} title={ticket.cim} dimmed={ticket.csoport === "lezart"}>
                   {#if ticket.allapot}
-                    <Badge>{ticket.allapot}</Badge>
+                    <Badge variant={ticket.csoport === "ismeretlen" ? "warning" : "secondary"}>{ticket.allapot}</Badge>
                   {/if}
+                  <Progress done={ticket.pipak.kesz} total={ticket.pipak.osszes} />
                 </Item>
               {/each}
             </ItemList>

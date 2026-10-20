@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A példaprojekt ticketjeinél a pipák aránya látszik (például a 01-nél 0/7)
 - [ ] Egy lezárt ticket láthatóan elkülönül a nyitottaktól
