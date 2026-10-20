@@ -69,8 +69,8 @@ A kivétel a `.groundwork/` mappát és a jelölt blokkokat veszi ki, mást nem.
     A `launch` értéke `npx` vagy `container`. Konténernél még: `"image": "node:22.18-alpine"` (pontos címke).
   - `README.md`: angol, rögzített sablonból, a `config.json`-ból generálva. Leírja, mi ez a mappa, melyik pontos parancs indítja a Groundworköt, és hogyan vehető ki (a `/setup-groundwork` futtatásával). A skill minden írásnál újragenerálja, kézzel nem szerkesztjük.
   - Mindkettő a gitbe kerül, nem gitignore-oljuk.
-- **Csomagnév:** a `groundwork` név az npm-en foglalt. A csomagnév a skill sablonjaiban egyetlen helyen áll, így az npm-kiadáskor csak ott kell átírni. Amíg a csomag nincs fent, a skill a végleges `npx <csomag>@<verzió>` parancsot írja, és ezt az npm-kiadás után egyszer kipróbáljuk.
-- **Rögzített verzió:** előkészítéskor a csomag aktuális npm-verziója, pontosan (`npm view <csomag> version`). A `latest` csak kifejezett kérésre. Frissítéskor a régi és az új verzió látszik, és csak jóváhagyás után írja át.
+- **Csomagnév és indító parancs:** a csomag neve `@pottom/groundwork` (a scope nélküli `groundwork` az npm-en foglalt; ezt a nevet a régi Groundwork is választotta). Az indító parancs `npx -y --prefer-offline @pottom/groundwork@<verzió>`: a `-y` miatt nem kérdez rá a telepítésre, a `--prefer-offline` miatt az első futás után a cache-ből indul, és nem várakozik a registryre (a régi Groundwork tanulsága). A csomagnév a skill sablonjaiban egyetlen helyen áll. Amíg a csomag nincs fent, a skill már ezt a végleges parancsot írja, és ezt az npm-kiadás után egyszer kipróbáljuk.
+- **Rögzített verzió:** előkészítéskor a csomag aktuális npm-verziója, pontosan (`npm view @pottom/groundwork version`). A `latest` csak kifejezett kérésre. Frissítéskor a régi és az új verzió látszik, és csak jóváhagyás után írja át.
 - **Jelölt blokk:** HTML-megjegyzés-jelölők között, névvel:
   ```markdown
   <!-- groundwork:begin closing-a-ticket -->
@@ -85,7 +85,7 @@ A kivétel a `.groundwork/` mappát és a jelölt blokkokat veszi ki, mást nem.
 - **Nem helyi tracker** (GitHub, GitLab, más): figyelmeztet, hogy a Groundwork ma csak a helyi trackert olvassa, előkészít, de jelölt blokkot nem ír, és felzárkóztatást sem kínál.
 - **Felzárkóztatás:** csak helyi trackernél, és csak ha van nyitott ticket. Opcionális utolsó lépés előkészítéskor, és később is kérhető. Egy táblázatban mutatja a nyitott ticketeket: ticket, bizonyíték, javaslat. Csak az elfogadottakat zárja le, a lezárási szabály szerint: kipipálja a teljesült feltételeket, `Status: done`, és dátumozott megjegyzést tesz a `## Comments` alá arról, hogy a felzárkóztatáskor fogadták el. A nulláról induló és a futó projekt így nem két külön út, csak annyi a különbség, hogy van-e nyitott ticket.
 - **Újrafuttatás előkészített projektben:** először ellenőriz (érvényes-e a `config.json`, egyezik-e a `README.md` a sablonnal, megvan-e és naprakész-e a jelölt blokk), jelzi az eltéréseket, és felajánlja a javítást. Utána felkínálja: verziófrissítés, indítási mód váltása, offline image parancsa (konténeres módnál), felzárkóztatás, kivétel. Ha a hívás megnevezi a célt, egyből arra megy.
-- **Konténeres mód:** a `config.json`-ban `launch: container` és `image`. A `README.md` a teljes `docker run` parancsot tartalmazza: pontos verziójú hivatalos Node-image, npx a rögzített verzióval, a projekt csak olvashatóan csatolva, `-p 127.0.0.1:…`, `--host 0.0.0.0`, böngészőnyitás nélkül (ADR 0008). Kérésre a skill kiadja az offline image egyszeri, helyi megépítésének kész parancsát. Ez a konténeres futástól függ (`.scratch/kontener/`, 01: a `--host` kapcsoló ma még nincs meg).
+- **Konténeres mód:** a `config.json`-ban `launch: container` és `image`. A `README.md` a teljes `docker run` parancsot tartalmazza: pontos verziójú hivatalos Node-image, a fenti `npx` parancs a rögzített verzióval, a projekt csak olvashatóan csatolva, `-p 127.0.0.1:…`, `--host 0.0.0.0`, böngészőnyitás nélkül (ADR 0008). Kérésre a skill kiadja az offline image egyszeri, helyi megépítésének kész parancsát. Ez a konténeres futástól függ (`.scratch/kontener/`, 01: a `--host` kapcsoló ma még nincs meg).
 - **Kivétel:** kiveszi a `.groundwork/` mappát, és minden `groundwork:begin` / `groundwork:end` jelölt blokkot a jelölőkkel együtt, semmi mást. A lezárt ticketek lezárva maradnak, a kézzel beírt szabály marad.
 - **A Groundwork programja: a „nincs előkészítve” jelzés.** A pillanatkép kap egy mezőt arról, hogy a projekt előkészített-e (van-e `.groundwork/` mappa). Ha nem, a felület tetején egy jól látható, nem tolakodó jelzés áll a két kimásolható lépéssel, és indításkor a terminál is kiírja. Az élő frissítés miatt a jelzés eltűnik, amint a mappa megjelenik: a figyelő a `.groundwork/` mappát is figyeli. A felület csak a komponenskészletből épül (ADR 0005). A program továbbra sem ír a projektbe (ADR 0001).
 - **A példaprojekt új taget kap:** `4a-megepitve-lezaratlan` a `39b1f2d` commiton (a 01 megépült, de nincs lezárva, és a szabály sincs benne). A példaprojekt README táblázata is kap egy sort.
@@ -109,7 +109,7 @@ A kivétel a `.groundwork/` mappát és a jelölt blokkokat veszi ki, mást nem.
 
 ## Hatókörön kívül
 
-- A csomag npm-re tétele és a csomagnév kiválasztása (a `groundwork` foglalt).
+- A csomag (`@pottom/groundwork`) npm-re tétele.
 - A Groundwork repójának távoli (GitHub) közzététele, amelyből a `npx skills add` telepít.
 - A konténeres futás maga (`--host`, a figyelő lekérdezéses módja): a `.scratch/kontener/` igénye.
 - A GitHub, GitLab vagy más külső tracker olvasása a Groundworkben.

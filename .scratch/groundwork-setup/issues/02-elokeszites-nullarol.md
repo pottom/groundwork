@@ -7,10 +7,10 @@
 **Status:** ready-for-agent
 
 - [ ] A skill a Groundwork repójában él, a sablonjaival együtt; `npx skills add`-del telepíthető, és az agent `/setup-groundwork`-ként látja
-- [ ] A csomagnév a sablonokban egyetlen helyen áll
+- [ ] A csomagnév (`@pottom/groundwork`) a sablonokban egyetlen helyen áll
 - [ ] Írás előtt megmutatja, mit talált és mit tenne, és csak jóváhagyás után ír
 - [ ] Próba a példaprojekt `0-indulas` tagjén: a `git diff` pontosan a `.groundwork/config.json`, a `.groundwork/README.md` és a jelölt blokk; más fájl nem változik
-- [ ] A `config.json` a pontos verziót tartalmazza, nem a `latest`-et; a `README.md` a sablonból készül, és a pontos `npx` parancsot tartalmazza
+- [ ] A `config.json` a pontos verziót tartalmazza, nem a `latest`-et; a `README.md` a sablonból készül, és a pontos indító parancsot tartalmazza: `npx -y --prefer-offline @pottom/groundwork@<verzió>`
 - [ ] A jelölt blokk a `groundwork:begin closing-a-ticket` / `groundwork:end closing-a-ticket` jelölők között áll, a szabály angol szövegével, a „Conventions” után
 - [ ] Próba egy üres, friss git-mappában: semmit nem ír, és a `/setup-matt-pocock-skills`-t kéri
 - [ ] Nem commitol; a végén elmondja, mit írt, és kéri a `git diff`-es átnézést
