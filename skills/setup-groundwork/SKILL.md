@@ -35,7 +35,7 @@ The project's `CLAUDE.md` / `AGENTS.md`, `.gitignore`, ticket files and everythi
 Read what exists; assume nothing:
 
 - `docs/agents/`: has `/setup-matt-pocock-skills` run here?
-- `docs/agents/issue-tracker.md`: is the tracker **local** (markdown files under `.scratch/`) or something else (GitHub, GitLab, Jira…)?
+- `docs/agents/issue-tracker.md`: is the tracker **local** (markdown files under `.scratch/`) or something else (GitHub, GitLab, Jira…)? A missing file leaves the tracker unknown.
 - A `## Closing a ticket` section in that file: absent, inside a `closing-a-ticket` marked block, or **unmarked** (the user's own). If unmarked, compare its text with [closing-a-ticket.md](closing-a-ticket.md).
 - `.groundwork/`: absent, or what its two files hold.
 
