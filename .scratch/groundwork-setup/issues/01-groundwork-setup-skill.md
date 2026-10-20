@@ -8,7 +8,8 @@ Amit tudnia kell (a triage és a grillezés pontosítja):
 - megnézi, le van-e futtatva a Matt-féle setup (`docs/agents/`); ha nincs, megmondja, hogy előbb azt kell futtatni;
 - ha nincs benne, beírja a `docs/agents/issue-tracker.md`-be a „Closing a ticket” szabályt, jelölt blokkban;
 - már futó projektnél felzárkóztat: végignézi a nyitott ticketeket a kóddal és a git-történettel, ticketenként javaslatot tesz a lezárásra, és csak az elfogadottakat zárja le;
-- megmondja, hogyan indítható a Groundwork a projektre;
+- megkérdezi az indítás módját (npx vagy konténer, ADR 0008), és a `.groundwork/` alá írja a választott módot és a rögzített verziót; megmondja, hogyan indítható;
+- kérésre frissíti a rögzített verziót;
 - kivételkor eltávolítja a `.groundwork/` mappát és a jelölt blokkokat, mást nem;
 - GitHub vagy GitLab tracker esetén jelzi, hogy a Groundwork ma csak a helyi trackert olvassa.
 

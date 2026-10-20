@@ -1,0 +1,5 @@
+# A Groundwork npm-en terjed; a konténer is npx-szel indítja
+
+**Status:** accepted
+
+A Groundwork egyetlen kiadási csatornája az npm: a végtermék (ADR 0003) npm-csomagként jelenik meg, és `npx`-szel indul. A projektbe nem a végtermék kerül, hanem a `.groundwork/` alá (ADR 0007) egy rövid beállítás a rögzített verzióval (például `0.2.0`); a frissítés ennek a számnak az átírása, a `latest` választható, de nem alapértelmezett. A konténeres futás nem külön termék: a hivatalos, pontos verziójú Node-image (például `node:22.18-alpine`) indítja ugyanazt a rögzített verziójú csomagot npx-szel, a projekt csak olvashatóan van csatolva, a port csak a gépen érhető el (`-p 127.0.0.1:…`). Konténerben a Groundwork nem nyit böngészőt, és a figyelő lekérdezéses módba kapcsolható, ha a fájlváltozás nem jut át. Saját image-et nem építünk, amíg internet nélküli (air-gapped) futásra valódi igény nincs. Amíg a csomag nincs npm-en, a helyben buildelt végtermék az átmeneti indítás. Az ára: az első indításhoz (konténerben minden indításhoz, npm-cache kötet nélkül) internet kell.
