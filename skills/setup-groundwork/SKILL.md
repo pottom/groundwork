@@ -40,8 +40,9 @@ Read what exists; assume nothing:
 - `docs/agents/issue-tracker.md`: is the tracker **local** (markdown files under `.scratch/`) or something else (GitHub, GitLab, Jira…)? A missing file leaves the tracker unknown.
 - A `## Closing a ticket` section in that file: absent, inside a `closing-a-ticket` marked block, or **unmarked** (the user's own). If unmarked, compare its text with [closing-a-ticket.md](closing-a-ticket.md).
 - `.groundwork/`: absent, or what its two files hold.
+- With a local tracker, the **open tickets**: ticket files under `.scratch/*/issues/` whose `Status:` is neither `done` nor `wontfix`.
 
-Done when you can state each of these four facts, or have found that `docs/agents/` is missing, which settles the route on its own.
+Done when you can state each of these five facts, or have found that `docs/agents/` is missing, which settles the route on its own.
 
 ### 2. Route
 
@@ -51,7 +52,7 @@ Done when you can state each of these four facts, or have found that `docs/agent
 
 ### 3. Show the plan and ask
 
-Present what you found (the four facts), then the plan: every file you will create, change or delete, with the exact content of each new file and the exact lines of each block added or removed. Ask for approval of this plan.
+Present what you found (the five facts), then the plan: every file you will create, change or delete, with the exact content of each new file and the exact lines of each block added or removed. Ask for approval of this plan.
 
 Done when the user has clearly approved this exact plan. Anything else (a question, a change, a no) means you write nothing yet: answer, adjust the plan and show it again, or stop.
 
@@ -62,3 +63,5 @@ Make exactly the approved changes, nothing more. Never commit.
 ### 5. Finish
 
 Tell the user what you wrote, and ask them to review it with `git diff` and commit it themselves. Tell them how to start Groundwork: the command in `.groundwork/README.md`. If the version lookup failed earlier, add that the command works once that version is published.
+
+After a preparation with a local tracker and open tickets, offer the catch-up: closing the open tickets whose work is already done, each one only if the user accepts it. On a yes, follow [catch-up.md](catch-up.md). Otherwise the catch-up stays unmentioned.
