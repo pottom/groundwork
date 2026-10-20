@@ -2,7 +2,7 @@
 
 The flow for a project that already has `.groundwork/`: check the footprint, then offer what this skill can do. The option the user picks builds the plan; steps 3–5 of [SKILL.md](SKILL.md) then show it, write it and finish.
 
-When the call names a goal (e.g. `/setup-groundwork remove`), skip both steps below: after exploring, go straight to that option's plan.
+When the call names a goal (e.g. `/setup-groundwork remove`), run the check, then go straight to that option's plan instead of offering the list; mention any deviation the check found alongside it.
 
 ## 1. Check
 
