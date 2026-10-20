@@ -24,14 +24,13 @@ export type Ticket = {
   /** A `**Status:**` sor értéke; ha nincs ilyen sor, hiányzik. */
   allapot?: string;
   csoport: Allapotcsoport;
-  /** A `- [x]` és az összes (`- [ ]` és `- [x]`) pipa száma. */
-  pipak: { kesz: number; osszes: number };
+  pipak: Pipak;
 };
 
-/**
- * Az állapot csoportja. A nyitott csoportot az 05–06. ticket bontja tovább
- * (agentre vár, emberre vár, folyamatban); a hiányzó állapot is ismeretlen.
- */
+/** A `- [x]` és az összes (`- [ ]` és `- [x]`) pipa száma egy ticketben. */
+export type Pipak = { kesz: number; osszes: number };
+
+/** Az állapot csoportja; ami nincs a `csoportok` között, az ismeretlen, a hiányzó állapot is. */
 export type Allapotcsoport = "nyitott" | "lezart" | "ismeretlen";
 
 const csoportok = new Map<string, Allapotcsoport>([
@@ -87,7 +86,7 @@ async function olvasTicketek(issues: string): Promise<Ticket[]> {
       szam: nev[1],
       cim: cimsor ? (/^\d+:\s*(.+)$/.exec(cimsor)?.[1] ?? cimsor) : nev[2],
       allapot,
-      csoport: (allapot !== undefined && csoportok.get(allapot)) || "ismeretlen",
+      csoport: csoportok.get(allapot ?? "") ?? "ismeretlen",
       pipak: pipak(ticket),
     });
   }
@@ -118,8 +117,8 @@ function mezo(fa: Root, nev: string): string | undefined {
  * A pipás listaelemek (`- [ ] …`, `- [x] …`) a fában, bármilyen mélyen; a kódblokkban állók nem.
  * A remark GFM nélkül nem ismeri a pipát, ezért a listaelem szövegének elejéről olvassuk.
  */
-function pipak(fa: Nodes): { kesz: number; osszes: number } {
-  const eredmeny = { kesz: 0, osszes: 0 };
+function pipak(fa: Nodes): Pipak {
+  const eredmeny: Pipak = { kesz: 0, osszes: 0 };
   if (fa.type === "listItem" && fa.children[0]?.type === "paragraph") {
     const pipa = /^\[([ xX])\]\s/.exec(toString(fa.children[0]));
     if (pipa) {
