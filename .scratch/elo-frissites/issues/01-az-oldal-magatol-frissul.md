@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Egy ticket `**Status:**` sorának átírása után az oldal pár másodpercen belül az új állapotot mutatja, újratöltés nélkül
 - [ ] Új ticket létrehozása és egy ticket törlése is látszik újratöltés nélkül

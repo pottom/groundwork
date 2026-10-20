@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
+import { figyel } from "../src/server/figyelo.ts";
 import { olvasPillanatkep } from "../src/server/pillanatkep.ts";
 
 // ADR 0001: a Groundwork a projekt mappájába soha nem ír.
@@ -24,12 +25,27 @@ async function lenyomat(mappa: string): Promise<string[]> {
   );
 }
 
-test("az olvasás után a projekt mappája változatlan", async () => {
+async function peldaMasolat(): Promise<string> {
   const projekt = join(await mkdtemp(join(tmpdir(), "groundwork-")), "projekt");
   await cp(pelda, projekt, { recursive: true });
+  return projekt;
+}
+
+test("az olvasás után a projekt mappája változatlan", async () => {
+  const projekt = await peldaMasolat();
   const elotte = await lenyomat(projekt);
 
   await olvasPillanatkep(projekt);
+
+  expect(await lenyomat(projekt)).toEqual(elotte);
+});
+
+test("a figyelés után a projekt mappája változatlan", async () => {
+  const projekt = await peldaMasolat();
+  const elotte = await lenyomat(projekt);
+
+  const figyelo = await figyel(projekt, () => {});
+  await figyelo.close();
 
   expect(await lenyomat(projekt)).toEqual(elotte);
 });

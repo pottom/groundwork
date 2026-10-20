@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { Badge } from "$lib/components/ui/badge";
   import { Detail } from "$lib/components/ui/detail";
   import { EmptyState } from "$lib/components/ui/empty-state";
@@ -7,6 +8,7 @@
   import { Item } from "$lib/components/ui/item";
   import { ItemList } from "$lib/components/ui/item-list";
   import { Note } from "$lib/components/ui/note";
+  import { Notice } from "$lib/components/ui/notice";
   import { Page } from "$lib/components/ui/page";
   import { Progress } from "$lib/components/ui/progress";
   import { Section } from "$lib/components/ui/section";
@@ -14,13 +16,44 @@
   import { Subheading } from "$lib/components/ui/subheading";
   import type { Pillanatkep, Ticket } from "../server/pillanatkep.ts";
 
-  async function betolt(): Promise<Pillanatkep> {
-    const valasz = await fetch("/api/pillanatkep");
-    if (!valasz.ok) throw new Error(`HTTP ${valasz.status}`);
-    const pillanatkep: Pillanatkep = await valasz.json();
-    document.title = pillanatkep.projektNev;
-    return pillanatkep;
+  // A legutóbb betöltött pillanatkép. Frissítéskor a régi látszik, amíg az új meg nem jön.
+  let pillanatkep = $state<Pillanatkep>();
+  let betoltesiHiba = $state(false);
+  let megszakadt = $state(false);
+
+  // Csak a legutóbb indított lekérés eredménye kerül ki, így egy lassú, régebbi válasz
+  // nem írhatja felül az újabbat.
+  let utolsoLekeres = 0;
+
+  async function betolt() {
+    const lekeres = ++utolsoLekeres;
+    try {
+      const valasz = await fetch("/api/pillanatkep");
+      if (!valasz.ok) throw new Error(`HTTP ${valasz.status}`);
+      const uj: Pillanatkep = await valasz.json();
+      if (lekeres !== utolsoLekeres) return;
+      pillanatkep = uj;
+      betoltesiHiba = false;
+      document.title = uj.projektNev;
+    } catch {
+      if (lekeres === utolsoLekeres) betoltesiHiba = true;
+    }
   }
+
+  // Az első betöltés, aztán a szerver jelzésére újra; megszakadt kapcsolat után
+  // (az EventSource magától újracsatlakozik) is újra, mert közben változhatott valami.
+  onMount(() => {
+    betolt();
+    const valtozasok = new EventSource("/api/valtozasok");
+    valtozasok.addEventListener("valtozott", betolt);
+    valtozasok.onerror = () => (megszakadt = true);
+    valtozasok.onopen = () => {
+      if (!megszakadt) return;
+      megszakadt = false;
+      betolt();
+    };
+    return () => valtozasok.close();
+  });
 </script>
 
 {#snippet mireVar(ticket: Ticket)}
@@ -63,7 +96,8 @@
 {/snippet}
 
 <Page>
-  {#await betolt() then { projektNev, teruletek, most }}
+  {#if pillanatkep}
+    {@const { projektNev, teruletek, most } = pillanatkep}
     <Stack>
       <Heading>{projektNev}</Heading>
       {#if teruletek.length > 0}
@@ -89,7 +123,10 @@
         </EmptyState>
       {/each}
     </Stack>
-  {:catch}
+  {:else if betoltesiHiba}
     A pillanatkép nem tölthető be.
-  {/await}
+  {/if}
+  {#if megszakadt}
+    <Notice>A kapcsolat megszakadt, újracsatlakozás…</Notice>
+  {/if}
 </Page>
